@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"strings"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 type PlanNode struct {
@@ -14,13 +16,16 @@ type PlanNode struct {
 }
 
 func (node PlanNode) View(level int, ctx ProgramContext) string {
+	levelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#777"))
+	nodeNameStyle := lipgloss.NewStyle().Bold(true)
+
 	var buf strings.Builder
 
-	buf.WriteString(fmt.Sprintf("%d ", level))
+	buf.WriteString(levelStyle.Render(fmt.Sprintf("%d ", level)))
 	if ctx.Indent {
 		buf.WriteString(strings.Repeat(" ", level-1))
 	}
-	buf.WriteString(node.name())
+	buf.WriteString(nodeNameStyle.Render(node.name()))
 	buf.WriteString(" ")
 	buf.WriteString(node.rows())
 	buf.WriteString("\n")
