@@ -47,5 +47,5 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return m.topNode.View()
+	return m.topNode.View(1)
 }

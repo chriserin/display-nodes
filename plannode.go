@@ -13,16 +13,17 @@ type PlanNode struct {
 	PartialMode string
 }
 
-func (node PlanNode) View() string {
+func (node PlanNode) View(level int) string {
 	var buf strings.Builder
 
+	buf.WriteString(fmt.Sprintf("%d ", level))
 	buf.WriteString(node.name())
 	buf.WriteString(" ")
 	buf.WriteString(node.rows())
 	buf.WriteString("\n")
 
 	for _, childNode := range node.Plans {
-		buf.WriteString(childNode.View())
+		buf.WriteString(childNode.View(level + 1))
 	}
 
 	return buf.String()
