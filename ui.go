@@ -9,10 +9,11 @@ import (
 
 type Model struct {
 	topNode PlanNode
+	ctx     ProgramContext
 }
 
-func runProgram(topNode PlanNode) {
-	p := tea.NewProgram(Model{topNode: topNode})
+func runProgram(topNode PlanNode, ctx ProgramContext) {
+	p := tea.NewProgram(Model{topNode: topNode, ctx: ctx})
 
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
@@ -35,6 +36,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.EnterAltScreen
 		case "A":
 			return m, tea.ExitAltScreen
+		case "i":
+			m.ctx.Indent = false
+			return m, nil
+		case "I":
+			m.ctx.Indent = true
+			return m, nil
 		default:
 			return m, tea.Println(msg)
 		}
@@ -47,5 +54,5 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return m.topNode.View(1)
+	return m.topNode.View(1, m.ctx)
 }

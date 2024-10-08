@@ -6,11 +6,9 @@ import (
 )
 
 func main() {
-
 	decoded := decodeJson(os.Stdin)
 	data := extractPlanNodes(decoded)
-	runProgram(data)
-
+	runProgram(data, ProgramContext{})
 }
 
 func decodeJson(data *os.File) map[string]interface{} {
