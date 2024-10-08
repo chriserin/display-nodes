@@ -106,10 +106,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.ExitAltScreen
 		case key.Matches(msg, m.keys.IndentOff):
 			m.ctx.Indent = false
-			return m, nil
 		case key.Matches(msg, m.keys.IndentOn):
 			m.ctx.Indent = true
-			return m, nil
+		case key.Matches(msg, m.keys.Up):
+			m.ctx.Cursor = m.ctx.Cursor - 1
+		case key.Matches(msg, m.keys.Down):
+			m.ctx.Cursor = m.ctx.Cursor + 1
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
 		default:
@@ -124,5 +126,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return m.topNode.View(1, m.ctx) + "\n" + m.help.View(m.keys)
+	renderedNode, _ := m.topNode.View(1, 0, m.ctx)
+	return renderedNode + "\n" + m.help.View(m.keys)
 }
