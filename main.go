@@ -32,6 +32,12 @@ func extractPlanNodes(plan map[string]interface{}) PlanNode {
 	nodeType := plan["Node Type"].(string)
 	planRows := plan["Plan Rows"].(float64)
 	actualRows := plan["Actual Rows"].(float64)
+	partialMode, ok := plan["Partial Mode"].(string)
+
+	if !ok {
+		partialMode = ""
+	}
+
 	plans := plan["Plans"]
 
 	planNodes := make([]PlanNode, 0, 1)
@@ -46,9 +52,10 @@ func extractPlanNodes(plan map[string]interface{}) PlanNode {
 	}
 
 	return PlanNode{
-		NodeType:   nodeType,
-		Plans:      planNodes,
-		PlanRows:   int(planRows),
-		ActualRows: int(actualRows),
+		NodeType:    nodeType,
+		Plans:       planNodes,
+		PlanRows:    int(planRows),
+		ActualRows:  int(actualRows),
+		PartialMode: partialMode,
 	}
 }
