@@ -16,7 +16,10 @@ type PlanNode struct {
 func (node PlanNode) View() string {
 	var buf strings.Builder
 
-	buf.WriteString(node.name() + "\n")
+	buf.WriteString(node.name())
+	buf.WriteString(" ")
+	buf.WriteString(node.rows())
+	buf.WriteString("\n")
 
 	for _, childNode := range node.Plans {
 		buf.WriteString(childNode.View())
@@ -27,4 +30,8 @@ func (node PlanNode) View() string {
 
 func (node PlanNode) name() string {
 	return strings.Trim(fmt.Sprintf("%s %s", node.PartialMode, node.NodeType), " ")
+}
+
+func (node PlanNode) rows() string {
+	return fmt.Sprintf("(Rows planned=%d actual=%d)", node.PlanRows, node.ActualRows)
 }
