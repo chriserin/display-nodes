@@ -9,7 +9,7 @@ func main() {
 	decoded := decodeJson(os.Stdin)
 	nodes := make([]PlanNode, 0, 1)
 	lineNumber := 0
-	extractPlanNodes(decoded, 0, &lineNumber, &nodes)
+	extractPlanNodes(decoded, 1, &lineNumber, &nodes)
 	runProgram(nodes, ProgramContext{})
 }
 
