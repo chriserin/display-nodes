@@ -15,6 +15,7 @@ type PlanNode struct {
 	PartialMode string
 	LineNumber  int
 	Level       int
+	Parent      int
 }
 
 func (node PlanNode) View(ctx ProgramContext) string {
@@ -23,6 +24,8 @@ func (node PlanNode) View(ctx ProgramContext) string {
 
 	if ctx.Cursor == node.LineNumber {
 		background = lipgloss.Color("#f33")
+	} else if ctx.Cursor == node.Parent {
+		background = lipgloss.Color("#a33")
 	} else {
 		background = lipgloss.Color("#000")
 	}
@@ -33,11 +36,11 @@ func (node PlanNode) View(ctx ProgramContext) string {
 
 	var buf strings.Builder
 
-	buf.WriteString(levelStyle.Render(fmt.Sprintf("%d ", node.Level)))
 	buf.WriteString(levelStyle.Render(fmt.Sprintf("%d ", node.LineNumber)))
+	buf.WriteString(levelStyle.Render(fmt.Sprintf("%d ", node.Level)))
 
 	if ctx.Indent {
-		buf.WriteString(everythingStyle.Render(strings.Repeat(" ", node.Level-1)))
+		buf.WriteString(everythingStyle.Render(strings.Repeat("  ", node.Level-1)))
 	}
 
 	buf.WriteString(nodeNameStyle.Render(node.name() + " " + node.rows()))

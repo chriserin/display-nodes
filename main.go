@@ -9,8 +9,8 @@ func main() {
 	decoded := decodeJson(os.Stdin)
 	nodes := make([]PlanNode, 0, 1)
 	lineNumber := 0
-	extractPlanNodes(decoded, 1, &lineNumber, &nodes)
-	runProgram(nodes, ProgramContext{})
+	extractPlanNodes(decoded, 1, lineNumber, &lineNumber, &nodes)
+	runProgram(nodes, ProgramContext{Cursor: 1})
 }
 
 func decodeJson(data *os.File) map[string]interface{} {
@@ -27,7 +27,7 @@ func decodeJson(data *os.File) map[string]interface{} {
 	return plan
 }
 
-func extractPlanNodes(plan map[string]interface{}, level int, lineNumber *int, nodes *[]PlanNode) PlanNode {
+func extractPlanNodes(plan map[string]interface{}, level int, parent int, lineNumber *int, nodes *[]PlanNode) PlanNode {
 	nodeType := plan["Node Type"].(string)
 	planRows := plan["Plan Rows"].(float64)
 	actualRows := plan["Actual Rows"].(float64)
@@ -41,13 +41,16 @@ func extractPlanNodes(plan map[string]interface{}, level int, lineNumber *int, n
 
 	*lineNumber = *lineNumber + 1
 
+	thisNodeNumber := *lineNumber
+
 	extractedNode := PlanNode{
 		NodeType:    nodeType,
 		PlanRows:    int(planRows),
 		ActualRows:  int(actualRows),
 		PartialMode: partialMode,
-		LineNumber:  *lineNumber,
+		LineNumber:  thisNodeNumber,
 		Level:       level,
+		Parent:      parent,
 	}
 
 	*nodes = append(*nodes, extractedNode)
@@ -55,7 +58,7 @@ func extractPlanNodes(plan map[string]interface{}, level int, lineNumber *int, n
 	if plans != nil {
 		for _, plan := range plans.([]interface{}) {
 			if plan != nil {
-				extractPlanNodes(plan.(map[string]interface{}), level+1, lineNumber, nodes)
+				extractPlanNodes(plan.(map[string]interface{}), level+1, thisNodeNumber, lineNumber, nodes)
 			}
 		}
 	}
