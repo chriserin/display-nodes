@@ -13,13 +13,15 @@ type PlanNode struct {
 	PlanRows    int
 	ActualRows  int
 	PartialMode string
+	LineNumber  int
+	Level       int
 }
 
-func (node PlanNode) View(level int, lineNumber int, ctx ProgramContext) (string, int) {
+func (node PlanNode) View(ctx ProgramContext) string {
 
 	var background lipgloss.Color
 
-	if ctx.Cursor == lineNumber {
+	if ctx.Cursor == node.LineNumber {
 		background = lipgloss.Color("#f33")
 	} else {
 		background = lipgloss.Color("#000")
@@ -28,26 +30,20 @@ func (node PlanNode) View(level int, lineNumber int, ctx ProgramContext) (string
 	levelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#777")).Background(background)
 	nodeNameStyle := lipgloss.NewStyle().Bold(true).Background(background)
 	everythingStyle := lipgloss.NewStyle().Background(background)
-	newLineNumber := lineNumber + 1
 
 	var buf strings.Builder
 
-	buf.WriteString(levelStyle.Render(fmt.Sprintf("%d ", level)))
-	buf.WriteString(levelStyle.Render(fmt.Sprintf("%d ", newLineNumber)))
+	buf.WriteString(levelStyle.Render(fmt.Sprintf("%d ", node.Level)))
+	buf.WriteString(levelStyle.Render(fmt.Sprintf("%d ", node.LineNumber)))
+
 	if ctx.Indent {
-		buf.WriteString(everythingStyle.Render(strings.Repeat(" ", level-1)))
+		buf.WriteString(everythingStyle.Render(strings.Repeat(" ", node.Level-1)))
 	}
+
 	buf.WriteString(nodeNameStyle.Render(node.name() + " " + node.rows()))
 	buf.WriteString("\n")
 
-	var renderedNode string
-
-	for _, childNode := range node.Plans {
-		renderedNode, newLineNumber = childNode.View(level+1, newLineNumber, ctx)
-		buf.WriteString(renderedNode)
-	}
-
-	return buf.String(), newLineNumber
+	return buf.String()
 }
 
 func (node PlanNode) name() string {

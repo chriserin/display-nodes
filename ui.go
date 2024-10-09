@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -74,14 +75,14 @@ var keys = keyMap{
 }
 
 type Model struct {
-	keys    keyMap
-	help    help.Model
-	topNode PlanNode
-	ctx     ProgramContext
+	keys  keyMap
+	help  help.Model
+	nodes []PlanNode
+	ctx   ProgramContext
 }
 
-func runProgram(topNode PlanNode, ctx ProgramContext) {
-	p := tea.NewProgram(Model{topNode: topNode, ctx: ctx, keys: keys, help: help.New()})
+func runProgram(nodes []PlanNode, ctx ProgramContext) {
+	p := tea.NewProgram(Model{nodes: nodes, ctx: ctx, keys: keys, help: help.New()})
 
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
@@ -126,6 +127,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	renderedNode, _ := m.topNode.View(1, 0, m.ctx)
-	return renderedNode + "\n" + m.help.View(m.keys)
+	var buf strings.Builder
+	for _, node := range m.nodes {
+		buf.WriteString(node.View(m.ctx))
+	}
+	return buf.String() + "\n" + m.help.View(m.keys)
 }
