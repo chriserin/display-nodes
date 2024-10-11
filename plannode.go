@@ -8,14 +8,15 @@ import (
 )
 
 type PlanNode struct {
-	NodeType    string
-	Plans       []PlanNode
-	PlanRows    int
-	ActualRows  int
-	PartialMode string
-	LineNumber  int
-	Level       int
-	Parent      int
+	NodeType     string
+	Plans        []PlanNode
+	PlanRows     int
+	ActualRows   int
+	PartialMode  string
+	LineNumber   int
+	Level        int
+	Parent       int
+	RelationName string
 }
 
 func (node PlanNode) View(ctx ProgramContext) string {

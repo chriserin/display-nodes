@@ -37,6 +37,12 @@ func extractPlanNodes(plan map[string]interface{}, level int, parent int, lineNu
 		partialMode = ""
 	}
 
+	relationName, ok := plan["Relation Name"].(string)
+
+	if !ok {
+		relationName = ""
+	}
+
 	plans := plan["Plans"]
 
 	*lineNumber = *lineNumber + 1
@@ -44,13 +50,14 @@ func extractPlanNodes(plan map[string]interface{}, level int, parent int, lineNu
 	thisNodeNumber := *lineNumber
 
 	extractedNode := PlanNode{
-		NodeType:    nodeType,
-		PlanRows:    int(planRows),
-		ActualRows:  int(actualRows),
-		PartialMode: partialMode,
-		LineNumber:  thisNodeNumber,
-		Level:       level,
-		Parent:      parent,
+		NodeType:     nodeType,
+		PlanRows:     int(planRows),
+		ActualRows:   int(actualRows),
+		PartialMode:  partialMode,
+		LineNumber:   thisNodeNumber,
+		Level:        level,
+		Parent:       parent,
+		RelationName: relationName,
 	}
 
 	*nodes = append(*nodes, extractedNode)
