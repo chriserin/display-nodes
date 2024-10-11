@@ -9,7 +9,7 @@ func main() {
 	decoded := decodeJson(os.Stdin)
 	nodes := make([]PlanNode, 0, 1)
 	lineNumber := 0
-	extractPlanNodes(decoded, 1, lineNumber, &lineNumber, &nodes)
+	extractPlanNodes(decoded, position{LineNumber: 0, Level: 0, Parent: 0}, &lineNumber, &nodes)
 	runProgram(nodes, ProgramContext{Cursor: 1})
 }
 
@@ -27,7 +27,13 @@ func decodeJson(data *os.File) map[string]interface{} {
 	return plan
 }
 
-func extractPlanNodes(plan map[string]interface{}, level int, parent int, lineNumber *int, nodes *[]PlanNode) PlanNode {
+type position struct {
+	LineNumber int
+	Level      int
+	Parent     int
+}
+
+func extractPlanNodes(plan map[string]interface{}, parentPosition position, lineNumber *int, nodes *[]PlanNode) PlanNode {
 	nodeType := plan["Node Type"].(string)
 	planRows := plan["Plan Rows"].(float64)
 	actualRows := plan["Actual Rows"].(float64)
@@ -47,16 +53,18 @@ func extractPlanNodes(plan map[string]interface{}, level int, parent int, lineNu
 
 	*lineNumber = *lineNumber + 1
 
-	thisNodeNumber := *lineNumber
+	newPosition := position{
+		LineNumber: *lineNumber,
+		Level:      parentPosition.Level + 1,
+		Parent:     parentPosition.LineNumber,
+	}
 
 	extractedNode := PlanNode{
 		NodeType:     nodeType,
 		PlanRows:     int(planRows),
 		ActualRows:   int(actualRows),
 		PartialMode:  partialMode,
-		LineNumber:   thisNodeNumber,
-		Level:        level,
-		Parent:       parent,
+		Position:     newPosition,
 		RelationName: relationName,
 	}
 
@@ -65,7 +73,7 @@ func extractPlanNodes(plan map[string]interface{}, level int, parent int, lineNu
 	if plans != nil {
 		for _, plan := range plans.([]interface{}) {
 			if plan != nil {
-				extractPlanNodes(plan.(map[string]interface{}), level+1, thisNodeNumber, lineNumber, nodes)
+				extractPlanNodes(plan.(map[string]interface{}), newPosition, lineNumber, nodes)
 			}
 		}
 	}
