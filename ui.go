@@ -22,6 +22,7 @@ type keyMap struct {
 	Down      key.Binding
 	Help      key.Binding
 	Quit      key.Binding
+	JoinView  key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
@@ -72,6 +73,10 @@ var keys = keyMap{
 		key.WithKeys("q", "esc", "ctrl+c"),
 		key.WithHelp("q", "quit"),
 	),
+	JoinView: key.NewBinding(
+		key.WithKeys("J"),
+		key.WithHelp("J", "Join"),
+	),
 }
 
 type Model struct {
@@ -115,6 +120,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.Cursor = m.ctx.Cursor + 1
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
+		case key.Matches(msg, m.keys.JoinView):
+			m.ctx.JoinView = !m.ctx.JoinView
 		default:
 			return m, tea.Println(msg)
 		}
@@ -129,7 +136,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	var buf strings.Builder
 	for _, node := range m.nodes {
-		buf.WriteString(node.View(m.ctx))
+		if node.Display(m.ctx) {
+			buf.WriteString(node.View(m.ctx))
+		}
 	}
 	return buf.String() + "\n" + m.help.View(m.keys)
 }

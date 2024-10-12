@@ -3,14 +3,15 @@ package main
 import (
 	"encoding/json"
 	"os"
+	"slices"
 )
 
 func main() {
 	decoded := decodeJson(os.Stdin)
 	nodes := make([]PlanNode, 0, 1)
 	lineNumber := 0
-	extractPlanNodes(decoded, position{LineNumber: 0, Level: 0, Parent: 0}, &lineNumber, &nodes)
-	runProgram(nodes, ProgramContext{Cursor: 1})
+	extractPlanNodes(decoded, position{LineNumber: 0, Level: 0, Parent: 0}, position{LineNumber: 0, Level: 0, Parent: 0}, &lineNumber, &nodes)
+	runProgram(nodes, ProgramContext{Cursor: 1, Indent: true, JoinView: true})
 }
 
 func decodeJson(data *os.File) map[string]interface{} {
@@ -31,9 +32,10 @@ type position struct {
 	LineNumber int
 	Level      int
 	Parent     int
+	Display    bool
 }
 
-func extractPlanNodes(plan map[string]interface{}, parentPosition position, lineNumber *int, nodes *[]PlanNode) PlanNode {
+func extractPlanNodes(plan map[string]interface{}, parentPosition position, parentJoinPosition position, lineNumber *int, nodes *[]PlanNode) PlanNode {
 	nodeType := plan["Node Type"].(string)
 	planRows := plan["Plan Rows"].(float64)
 	actualRows := plan["Actual Rows"].(float64)
@@ -57,15 +59,30 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, line
 		LineNumber: *lineNumber,
 		Level:      parentPosition.Level + 1,
 		Parent:     parentPosition.LineNumber,
+		Display:    true,
+	}
+
+	var joinViewPosition position
+	if isJoinType(nodeType) || relationName != "" {
+		joinViewPosition = position{
+			LineNumber: *lineNumber,
+			Level:      parentJoinPosition.Level + 1,
+			Parent:     parentJoinPosition.LineNumber,
+			Display:    true,
+		}
+	} else {
+		joinViewPosition = parentJoinPosition
+		joinViewPosition.Display = false
 	}
 
 	extractedNode := PlanNode{
-		NodeType:     nodeType,
-		PlanRows:     int(planRows),
-		ActualRows:   int(actualRows),
-		PartialMode:  partialMode,
-		Position:     newPosition,
-		RelationName: relationName,
+		NodeType:         nodeType,
+		PlanRows:         int(planRows),
+		ActualRows:       int(actualRows),
+		PartialMode:      partialMode,
+		Position:         newPosition,
+		JoinViewPosition: joinViewPosition,
+		RelationName:     relationName,
 	}
 
 	*nodes = append(*nodes, extractedNode)
@@ -73,10 +90,14 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, line
 	if plans != nil {
 		for _, plan := range plans.([]interface{}) {
 			if plan != nil {
-				extractPlanNodes(plan.(map[string]interface{}), newPosition, lineNumber, nodes)
+				extractPlanNodes(plan.(map[string]interface{}), newPosition, joinViewPosition, lineNumber, nodes)
 			}
 		}
 	}
 
 	return extractedNode
+}
+
+func isJoinType(nodeType string) bool {
+	return slices.Contains([]string{"Nested Loop", "Hash Join", "Merge Join"}, nodeType)
 }
