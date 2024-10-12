@@ -45,7 +45,6 @@ func (node PlanNode) View(ctx ProgramContext) string {
 	var buf strings.Builder
 
 	buf.WriteString(levelStyle.Render(fmt.Sprintf("%2d ", viewPosition.LineNumber)))
-	buf.WriteString(levelStyle.Render(fmt.Sprintf("%2d ", viewPosition.Level)))
 
 	if ctx.Indent {
 		buf.WriteString(everythingStyle.Render(strings.Repeat("  ", viewPosition.Level-1)))
