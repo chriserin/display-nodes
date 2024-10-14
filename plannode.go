@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"strings"
-
-	"github.com/charmbracelet/lipgloss"
 )
 
 type PlanNode struct {
@@ -20,7 +18,7 @@ type PlanNode struct {
 
 func (node PlanNode) View(ctx ProgramContext) string {
 
-	var background lipgloss.Color
+	var styles Styles
 
 	var viewPosition position
 
@@ -31,26 +29,22 @@ func (node PlanNode) View(ctx ProgramContext) string {
 	}
 
 	if ctx.Cursor == viewPosition.LineNumber {
-		background = lipgloss.Color("#f33")
+		styles = ctx.CursorStyle
 	} else if ctx.Cursor == viewPosition.Parent {
-		background = lipgloss.Color("#a33")
+		styles = ctx.ChildCursorStyle
 	} else {
-		background = lipgloss.Color("#000")
+		styles = ctx.NormalStyle
 	}
-
-	levelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#777")).Background(background)
-	nodeNameStyle := lipgloss.NewStyle().Bold(true).Background(background)
-	everythingStyle := lipgloss.NewStyle().Background(background)
 
 	var buf strings.Builder
 
-	buf.WriteString(levelStyle.Render(fmt.Sprintf("%2d ", viewPosition.LineNumber)))
+	buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%2d ", viewPosition.LineNumber)))
 
 	if ctx.Indent {
-		buf.WriteString(everythingStyle.Render(strings.Repeat("  ", viewPosition.Level-1)))
+		buf.WriteString(styles.Everything.Render(strings.Repeat("  ", viewPosition.Level-1)))
 	}
 
-	buf.WriteString(nodeNameStyle.Render(node.name() + " " + node.rows()))
+	buf.WriteString(styles.NodeName.Render(node.name() + " " + node.rows()))
 	buf.WriteString("\n")
 
 	return buf.String()
