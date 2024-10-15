@@ -15,6 +15,7 @@ type Styles struct {
 	Gutter     lipgloss.Style
 	NodeName   lipgloss.Style
 	Everything lipgloss.Style
+	Relation   lipgloss.Style
 }
 
 func InitProgramContext() ProgramContext {
@@ -31,13 +32,15 @@ func InitProgramContext() ProgramContext {
 
 func NormalStyles() Styles {
 	gutterStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#777"))
-	nodeNameStyle := lipgloss.NewStyle().Bold(true)
+	nodeNameStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#65bcff"))
 	everythingStyle := lipgloss.NewStyle()
+	relationStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#c099ff"))
 
 	return Styles{
 		Gutter:     gutterStyle,
 		NodeName:   nodeNameStyle,
 		Everything: everythingStyle,
+		Relation:   relationStyle,
 	}
 }
 
@@ -48,6 +51,7 @@ func CursorStyle(style Styles) Styles {
 		Gutter:     style.Gutter.Foreground(lipgloss.Color("#ff336c")),
 		NodeName:   style.NodeName.Background(background),
 		Everything: style.Everything.Background(background),
+		Relation:   style.Relation.Background(background),
 	}
 }
 
@@ -58,5 +62,6 @@ func ChildCursorStyle(style Styles) Styles {
 		Gutter:     style.Gutter,
 		NodeName:   style.NodeName.Background(background),
 		Everything: style.Everything.Background(background),
+		Relation:   style.Relation.Background(background),
 	}
 }

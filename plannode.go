@@ -18,16 +18,14 @@ type PlanNode struct {
 
 func (node PlanNode) View(ctx ProgramContext) string {
 
-	var styles Styles
-
 	var viewPosition position
-
 	if ctx.JoinView {
 		viewPosition = node.JoinViewPosition
 	} else {
 		viewPosition = node.Position
 	}
 
+	var styles Styles
 	if ctx.Cursor == viewPosition.LineNumber {
 		styles = ctx.CursorStyle
 	} else if ctx.Cursor == viewPosition.Parent {
@@ -37,14 +35,19 @@ func (node PlanNode) View(ctx ProgramContext) string {
 	}
 
 	var buf strings.Builder
-
 	buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%2d ", viewPosition.LineNumber)))
 
 	if ctx.Indent {
 		buf.WriteString(styles.Everything.Render(strings.Repeat("  ", viewPosition.Level-1)))
 	}
 
-	buf.WriteString(styles.NodeName.Render(node.name() + " " + node.rows()))
+	if ctx.JoinView && node.RelationName != "" {
+		buf.WriteString(styles.Relation.Render(node.RelationName))
+	} else {
+		buf.WriteString(styles.NodeName.Render(node.name() + " "))
+		buf.WriteString(styles.Everything.Render(node.rows()))
+	}
+
 	buf.WriteString("\n")
 
 	return buf.String()
