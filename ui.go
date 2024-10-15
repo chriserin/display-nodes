@@ -14,15 +14,14 @@ import (
 // keyMap defines a set of keybindings. To work for help it must satisfy
 // key.Map. It could also very easily be a map[string]key.Binding.
 type keyMap struct {
-	AltOn     key.Binding
-	AltOff    key.Binding
-	IndentOn  key.Binding
-	IndentOff key.Binding
-	Up        key.Binding
-	Down      key.Binding
-	Help      key.Binding
-	Quit      key.Binding
-	JoinView  key.Binding
+	AltOn        key.Binding
+	AltOff       key.Binding
+	IndentToggle key.Binding
+	Up           key.Binding
+	Down         key.Binding
+	Help         key.Binding
+	Quit         key.Binding
+	JoinView     key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
@@ -35,7 +34,7 @@ func (k keyMap) ShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentOn, k.IndentOff}, // first column
+		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle}, // first column
 		{k.Help, k.Quit}, // second column
 	}
 }
@@ -49,13 +48,9 @@ var keys = keyMap{
 		key.WithKeys("A"),
 		key.WithHelp("A", "alt screen off"),
 	),
-	IndentOn: key.NewBinding(
-		key.WithKeys("i"),
-		key.WithHelp("i", "indent on"),
-	),
-	IndentOff: key.NewBinding(
+	IndentToggle: key.NewBinding(
 		key.WithKeys("I"),
-		key.WithHelp("I", "indent off"),
+		key.WithHelp("I", "indent toggle"),
 	),
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
@@ -110,10 +105,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.EnterAltScreen
 		case key.Matches(msg, m.keys.AltOff):
 			return m, tea.ExitAltScreen
-		case key.Matches(msg, m.keys.IndentOff):
-			m.ctx.Indent = false
-		case key.Matches(msg, m.keys.IndentOn):
-			m.ctx.Indent = true
+		case key.Matches(msg, m.keys.IndentToggle):
+			m.ctx.Indent = !m.ctx.Indent
 		case key.Matches(msg, m.keys.Up):
 			m.ctx.Cursor = m.ctx.Cursor - 1
 		case key.Matches(msg, m.keys.Down):
