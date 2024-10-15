@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"strings"
+
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 type PlanNode struct {
@@ -66,5 +69,10 @@ func (node PlanNode) name() string {
 }
 
 func (node PlanNode) rows() string {
-	return fmt.Sprintf("(Rows planned=%d actual=%d)", node.PlanRows, node.ActualRows)
+
+	p := message.NewPrinter(language.English)
+	separatedPlanRows := p.Sprintf("%d", node.PlanRows)
+	separatedActualRows := p.Sprintf("%d", node.ActualRows)
+
+	return fmt.Sprintf("(Rows planned=%s actual=%s)", separatedPlanRows, separatedActualRows)
 }
