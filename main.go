@@ -11,7 +11,7 @@ func main() {
 	nodes := make([]PlanNode, 0, 1)
 	lineNumber := 0
 	extractPlanNodes(decoded, position{LineNumber: 0, Level: 0, Parent: 0}, position{LineNumber: 0, Level: 0, Parent: 0}, &lineNumber, &nodes)
-	runProgram(nodes, InitProgramContext())
+	runProgram(nodes, InitProgramContext(nodes[0]))
 }
 
 func decodeJson(data *os.File) map[string]interface{} {

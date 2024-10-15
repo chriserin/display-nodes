@@ -19,7 +19,7 @@ type PlanNode struct {
 	RelationName     string
 }
 
-func (node PlanNode) View(ctx ProgramContext) string {
+func (node PlanNode) View(i int, ctx ProgramContext) string {
 
 	var viewPosition position
 	if ctx.JoinView {
@@ -29,16 +29,16 @@ func (node PlanNode) View(ctx ProgramContext) string {
 	}
 
 	var styles Styles
-	if ctx.Cursor == viewPosition.LineNumber {
+	if ctx.Cursor == i {
 		styles = ctx.CursorStyle
-	} else if ctx.Cursor == viewPosition.Parent {
+	} else if ctx.SelectedNode.Position.LineNumber == viewPosition.Parent {
 		styles = ctx.ChildCursorStyle
 	} else {
 		styles = ctx.NormalStyle
 	}
 
 	var buf strings.Builder
-	buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%2d ", viewPosition.LineNumber)))
+	buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%2d ", i+1)))
 
 	if ctx.Indent {
 		buf.WriteString(styles.Everything.Render(strings.Repeat("  ", viewPosition.Level-1)))

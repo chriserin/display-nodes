@@ -9,6 +9,7 @@ type ProgramContext struct {
 	NormalStyle      Styles
 	CursorStyle      Styles
 	ChildCursorStyle Styles
+	SelectedNode     PlanNode
 }
 
 type Styles struct {
@@ -18,16 +19,17 @@ type Styles struct {
 	Relation   lipgloss.Style
 }
 
-func InitProgramContext() ProgramContext {
+func InitProgramContext(selectedNode PlanNode) ProgramContext {
 	normal := NormalStyles()
 
 	return ProgramContext{
-		Cursor:           1,
+		Cursor:           0,
 		Indent:           true,
-		JoinView:         true,
+		JoinView:         false,
 		NormalStyle:      normal,
 		CursorStyle:      CursorStyle(normal),
 		ChildCursorStyle: ChildCursorStyle(normal),
+		SelectedNode:     selectedNode,
 	}
 }
 

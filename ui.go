@@ -75,14 +75,15 @@ var keys = keyMap{
 }
 
 type Model struct {
-	keys  keyMap
-	help  help.Model
-	nodes []PlanNode
-	ctx   ProgramContext
+	keys         keyMap
+	help         help.Model
+	nodes        []PlanNode
+	ctx          ProgramContext
+	DisplayNodes []PlanNode
 }
 
 func runProgram(nodes []PlanNode, ctx ProgramContext) {
-	p := tea.NewProgram(Model{nodes: nodes, ctx: ctx, keys: keys, help: help.New()})
+	p := tea.NewProgram(Model{nodes: nodes, ctx: ctx, keys: keys, help: help.New(), DisplayNodes: nodes})
 
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
@@ -95,7 +96,6 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -108,13 +108,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.IndentToggle):
 			m.ctx.Indent = !m.ctx.Indent
 		case key.Matches(msg, m.keys.Up):
-			m.ctx.Cursor = m.ctx.Cursor - 1
+			if m.ctx.Cursor-1 >= 0 {
+				m.ctx.Cursor = m.ctx.Cursor - 1
+				m.ctx.SelectedNode = m.DisplayNodes[m.ctx.Cursor]
+			}
 		case key.Matches(msg, m.keys.Down):
-			m.ctx.Cursor = m.ctx.Cursor + 1
+			if m.ctx.Cursor+1 < len(m.DisplayNodes) {
+
+				m.ctx.Cursor = m.ctx.Cursor + 1
+				m.ctx.SelectedNode = m.DisplayNodes[m.ctx.Cursor]
+			}
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
 		case key.Matches(msg, m.keys.JoinView):
 			m.ctx.JoinView = !m.ctx.JoinView
+			m.DisplayNodes = displayedNodes(m.nodes, m.ctx)
+			m.ctx.Cursor = 0
+			m.ctx.SelectedNode = m.DisplayNodes[m.ctx.Cursor]
 		default:
 			return m, tea.Println(msg)
 		}
@@ -126,12 +136,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View() string {
-	var buf strings.Builder
-	for _, node := range m.nodes {
-		if node.Display(m.ctx) {
-			buf.WriteString(node.View(m.ctx))
+func displayedNodes(nodes []PlanNode, ctx ProgramContext) []PlanNode {
+	resultNodes := make([]PlanNode, 0, 1)
+
+	for _, node := range nodes {
+		if node.Display(ctx) {
+			resultNodes = append(resultNodes, node)
 		}
 	}
+
+	return resultNodes
+}
+
+func (m Model) View() string {
+	var buf strings.Builder
+
+	for i, node := range m.DisplayNodes {
+		buf.WriteString(node.View(i, m.ctx))
+	}
+
 	return buf.String() + "\n" + m.help.View(m.keys)
 }
