@@ -20,6 +20,7 @@ type Styles struct {
 
 func InitProgramContext() ProgramContext {
 	normal := NormalStyles()
+
 	return ProgramContext{
 		Cursor:           1,
 		Indent:           true,
@@ -48,7 +49,7 @@ func CursorStyle(style Styles) Styles {
 	background := lipgloss.Color("#2f334d")
 
 	return Styles{
-		Gutter:     style.Gutter.Foreground(lipgloss.Color("#ff336c")),
+		Gutter:     style.Gutter.Foreground(lipgloss.Color("#ff966c")),
 		NodeName:   style.NodeName.Background(background),
 		Everything: style.Everything.Background(background),
 		Relation:   style.Relation.Background(background),
@@ -56,7 +57,7 @@ func CursorStyle(style Styles) Styles {
 }
 
 func ChildCursorStyle(style Styles) Styles {
-	background := lipgloss.Color("#4f445e")
+	background := lipgloss.Color("#222277")
 
 	return Styles{
 		Gutter:     style.Gutter,
