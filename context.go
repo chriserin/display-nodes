@@ -54,7 +54,7 @@ func NormalStyles() Styles {
 }
 
 func CursorStyle(style Styles) Styles {
-	background := lipgloss.Color("#2f334d")
+	background := lipgloss.Color("#222277")
 
 	return Styles{
 		Gutter:     style.Gutter.Foreground(lipgloss.Color("#ff966c")),
@@ -67,7 +67,7 @@ func CursorStyle(style Styles) Styles {
 }
 
 func ChildCursorStyle(style Styles) Styles {
-	background := lipgloss.Color("#222277")
+	background := lipgloss.Color("#2f334d")
 
 	return Styles{
 		Gutter:     style.Gutter,
