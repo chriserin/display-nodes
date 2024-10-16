@@ -48,7 +48,7 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 		buf.WriteString(styles.Relation.Render(node.RelationName))
 	} else {
 		buf.WriteString(styles.NodeName.Render(node.name() + " "))
-		buf.WriteString(styles.Everything.Render(node.rows()))
+		buf.WriteString(node.rows(styles))
 	}
 
 	buf.WriteString("\n")
@@ -68,11 +68,21 @@ func (node PlanNode) name() string {
 	return strings.Trim(fmt.Sprintf("%s %s", node.PartialMode, node.NodeType), " ")
 }
 
-func (node PlanNode) rows() string {
+func (node PlanNode) rows(styles Styles) string {
+
+	var buf strings.Builder
 
 	p := message.NewPrinter(language.English)
 	separatedPlanRows := p.Sprintf("%d", node.PlanRows)
 	separatedActualRows := p.Sprintf("%d", node.ActualRows)
 
-	return fmt.Sprintf("(Rows planned=%s actual=%s)", separatedPlanRows, separatedActualRows)
+	buf.WriteString(styles.Bracket.Render("Rows["))
+	buf.WriteString(styles.Everything.Render("a="))
+	buf.WriteString(styles.Value.Render(separatedActualRows))
+	buf.WriteString(styles.Everything.Render(" "))
+	buf.WriteString(styles.Everything.Render("p="))
+	buf.WriteString(styles.Value.Render(separatedPlanRows))
+	buf.WriteString(styles.Bracket.Render("]"))
+
+	return buf.String()
 }
