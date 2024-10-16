@@ -45,7 +45,8 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 	}
 
 	if ctx.JoinView && node.RelationName != "" {
-		buf.WriteString(styles.Relation.Render(node.RelationName))
+		buf.WriteString(styles.Relation.Render(node.RelationName) + " ")
+		buf.WriteString(node.rows(styles))
 	} else {
 		buf.WriteString(styles.NodeName.Render(node.name() + " "))
 		buf.WriteString(node.rows(styles))
@@ -72,17 +73,32 @@ func (node PlanNode) rows(styles Styles) string {
 
 	var buf strings.Builder
 
-	p := message.NewPrinter(language.English)
-	separatedPlanRows := p.Sprintf("%d", node.PlanRows)
-	separatedActualRows := p.Sprintf("%d", node.ActualRows)
+	printer := message.NewPrinter(language.English)
+	separatedPlanRows := strings.Replace(printer.Sprintf("%d", node.PlanRows), ",", "_", 1)
+	separatedActualRows := strings.Replace(printer.Sprintf("%d", node.ActualRows), ",", "_", 1)
+
+	percentOfActual := float32(node.PlanRows) / float32(node.ActualRows) * 100
+
+	rowStatus := getRowStatus(percentOfActual, styles)
 
 	buf.WriteString(styles.Bracket.Render("Rows["))
-	buf.WriteString(styles.Everything.Render("a="))
-	buf.WriteString(styles.Value.Render(separatedActualRows))
-	buf.WriteString(styles.Everything.Render(" "))
 	buf.WriteString(styles.Everything.Render("p="))
 	buf.WriteString(styles.Value.Render(separatedPlanRows))
+	buf.WriteString(styles.Everything.Render(" "))
+	buf.WriteString(styles.Everything.Render("a="))
+	buf.WriteString(styles.Value.Render(separatedActualRows))
+	buf.WriteString(rowStatus)
 	buf.WriteString(styles.Bracket.Render("]"))
 
 	return buf.String()
+}
+
+func getRowStatus(percentOfActual float32, styles Styles) string {
+	if percentOfActual < 10 {
+		return styles.Warning.Render(fmt.Sprintf(" %.1f%%", percentOfActual))
+	} else if percentOfActual < 50 {
+		return styles.Caution.Render(fmt.Sprintf(" %.1f%%", percentOfActual))
+	} else {
+		return styles.Everything.Render(fmt.Sprintf(" %.1f%%", percentOfActual))
+	}
 }
