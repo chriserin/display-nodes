@@ -7,14 +7,14 @@ import (
 )
 
 func main() {
-	decoded := decodeJson(os.Stdin)
+	decoded, executionTime := decodeJson(os.Stdin)
 	nodes := make([]PlanNode, 0, 1)
 	lineNumber := 0
 	extractPlanNodes(decoded, position{LineNumber: 0, Level: 0, Parent: 0}, position{LineNumber: 0, Level: 0, Parent: 0}, &lineNumber, &nodes)
-	runProgram(nodes, InitProgramContext(nodes[0]))
+	runProgram(nodes, executionTime, InitProgramContext(nodes[0]))
 }
 
-func decodeJson(data *os.File) map[string]interface{} {
+func decodeJson(data *os.File) (map[string]interface{}, float64) {
 	var decoded any
 
 	err := json.NewDecoder(os.Stdin).Decode(&decoded)
@@ -23,9 +23,11 @@ func decodeJson(data *os.File) map[string]interface{} {
 		panic("panic!")
 	}
 
-	plan := decoded.([]interface{})[0].(map[string]interface{})["Plan"].(map[string]interface{})
+	planObject := decoded.([]interface{})[0].(map[string]interface{})
+	plan := planObject["Plan"].(map[string]interface{})
+	executionTime := planObject["Execution Time"].(float64)
 
-	return plan
+	return plan, executionTime
 }
 
 type position struct {

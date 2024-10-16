@@ -90,10 +90,24 @@ type Model struct {
 	nodes        []PlanNode
 	ctx          ProgramContext
 	DisplayNodes []PlanNode
+	Width        int
+	StatusLine   StatusLine
 }
 
-func runProgram(nodes []PlanNode, ctx ProgramContext) {
-	p := tea.NewProgram(Model{nodes: nodes, ctx: ctx, keys: keys, help: help.New(), DisplayNodes: nodes})
+func runProgram(nodes []PlanNode, executionTime float64, ctx ProgramContext) {
+	p := tea.NewProgram(
+		Model{
+			nodes:        nodes,
+			ctx:          ctx,
+			keys:         keys,
+			help:         help.New(),
+			DisplayNodes: nodes,
+			StatusLine: StatusLine{
+				ExecutionTime: executionTime,
+				TotalBuffers:  nodes[0].SharedBuffersHit + nodes[0].SharedBuffersRead,
+				TotalRows:     nodes[0].ActualRows,
+			},
+		})
 
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
@@ -143,7 +157,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		// Handle window size changes if needed
+		m.Width = msg.Width
 	}
 
 	return m, nil
@@ -163,6 +177,8 @@ func displayedNodes(nodes []PlanNode, ctx ProgramContext) []PlanNode {
 
 func (m Model) View() string {
 	var buf strings.Builder
+
+	buf.WriteString(m.StatusLine.View(m.Width))
 
 	for i, node := range m.DisplayNodes {
 		buf.WriteString(node.View(i, m.ctx))
