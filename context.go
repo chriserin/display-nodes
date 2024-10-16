@@ -6,6 +6,7 @@ type ProgramContext struct {
 	Indent           bool
 	Cursor           int
 	JoinView         bool
+	DisplayRows      bool
 	NormalStyle      Styles
 	CursorStyle      Styles
 	ChildCursorStyle Styles

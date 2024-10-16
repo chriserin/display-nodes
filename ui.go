@@ -22,6 +22,7 @@ type keyMap struct {
 	Help         key.Binding
 	Quit         key.Binding
 	JoinView     key.Binding
+	ToggleRows   key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
@@ -34,7 +35,7 @@ func (k keyMap) ShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle}, // first column
+		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle, k.ToggleRows}, // first column
 		{k.Help, k.Quit}, // second column
 	}
 }
@@ -71,6 +72,10 @@ var keys = keyMap{
 	JoinView: key.NewBinding(
 		key.WithKeys("J"),
 		key.WithHelp("J", "Join"),
+	),
+	ToggleRows: key.NewBinding(
+		key.WithKeys("R"),
+		key.WithHelp("R", "Toggle Rows"),
 	),
 }
 
@@ -125,6 +130,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.DisplayNodes = displayedNodes(m.nodes, m.ctx)
 			m.ctx.Cursor = 0
 			m.ctx.SelectedNode = m.DisplayNodes[m.ctx.Cursor]
+		case key.Matches(msg, m.keys.ToggleRows):
+			m.ctx.DisplayRows = !m.ctx.DisplayRows
 		default:
 			return m, tea.Println(msg)
 		}
