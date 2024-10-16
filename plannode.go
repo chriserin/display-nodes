@@ -9,14 +9,16 @@ import (
 )
 
 type PlanNode struct {
-	NodeType         string
-	Plans            []PlanNode
-	PlanRows         int
-	ActualRows       int
-	PartialMode      string
-	Position         position
-	JoinViewPosition position
-	RelationName     string
+	NodeType          string
+	Plans             []PlanNode
+	PlanRows          int
+	ActualRows        int
+	PartialMode       string
+	Position          position
+	JoinViewPosition  position
+	RelationName      string
+	SharedBuffersRead int
+	SharedBuffersHit  int
 }
 
 func (node PlanNode) View(i int, ctx ProgramContext) string {
@@ -49,8 +51,11 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 	} else {
 		buf.WriteString(styles.NodeName.Render(node.name() + " "))
 	}
+
 	if ctx.DisplayRows {
 		buf.WriteString(node.rows(styles))
+	} else if ctx.DisplayBuffers {
+		buf.WriteString(node.buffers(styles))
 	}
 
 	buf.WriteString("\n")
@@ -70,13 +75,23 @@ func (node PlanNode) name() string {
 	return strings.Trim(fmt.Sprintf("%s %s", node.PartialMode, node.NodeType), " ")
 }
 
+func (node PlanNode) buffers(styles Styles) string {
+	var buf strings.Builder
+	buf.WriteString(styles.Bracket.Render("Buffers["))
+	buf.WriteString(styles.Everything.Render("total="))
+	buf.WriteString(styles.Value.Render(formatUnderscores(node.SharedBuffersRead + node.SharedBuffersHit)))
+	buf.WriteString(styles.Everything.Render(" read="))
+	buf.WriteString(styles.Value.Render(formatUnderscores(node.SharedBuffersRead)))
+	buf.WriteString(styles.Bracket.Render("]"))
+	return buf.String()
+}
+
 func (node PlanNode) rows(styles Styles) string {
 
 	var buf strings.Builder
 
-	printer := message.NewPrinter(language.English)
-	separatedPlanRows := strings.Replace(printer.Sprintf("%d", node.PlanRows), ",", "_", 1)
-	separatedActualRows := strings.Replace(printer.Sprintf("%d", node.ActualRows), ",", "_", 1)
+	separatedPlanRows := formatUnderscores(node.PlanRows)
+	separatedActualRows := formatUnderscores(node.ActualRows)
 
 	percentOfActual := float32(node.PlanRows) / float32(node.ActualRows) * 100
 
@@ -102,4 +117,10 @@ func getRowStatus(percentOfActual float32, styles Styles) string {
 	} else {
 		return styles.Everything.Render(fmt.Sprintf(" %.1f%%", percentOfActual))
 	}
+}
+
+var printer *message.Printer = message.NewPrinter(language.English)
+
+func formatUnderscores(value int) string {
+	return strings.Replace(printer.Sprintf("%d", value), ",", "_", 1)
 }

@@ -51,6 +51,9 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 		relationName = ""
 	}
 
+	sharedReadBlocks := plan["Shared Read Blocks"].(float64)
+	sharedHitBlocks := plan["Shared Hit Blocks"].(float64)
+
 	plans := plan["Plans"]
 
 	*lineNumber = *lineNumber + 1
@@ -76,13 +79,15 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 	}
 
 	extractedNode := PlanNode{
-		NodeType:         nodeType,
-		PlanRows:         int(planRows),
-		ActualRows:       int(actualRows),
-		PartialMode:      partialMode,
-		Position:         newPosition,
-		JoinViewPosition: joinViewPosition,
-		RelationName:     relationName,
+		NodeType:          nodeType,
+		PlanRows:          int(planRows),
+		ActualRows:        int(actualRows),
+		PartialMode:       partialMode,
+		Position:          newPosition,
+		JoinViewPosition:  joinViewPosition,
+		RelationName:      relationName,
+		SharedBuffersHit:  int(sharedHitBlocks),
+		SharedBuffersRead: int(sharedReadBlocks),
 	}
 
 	*nodes = append(*nodes, extractedNode)
