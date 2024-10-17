@@ -12,5 +12,5 @@ Display Nodes is a tool that enhances the readability of postgres query plans.
 - [ ] create cost output per node
 - [ ] selected node details window
 - [ ] display node type with relation name
-- [ ] Whole line highlight
+- [x] Whole line highlight
 - [ ] refine status bar display

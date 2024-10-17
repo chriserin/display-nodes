@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-runewidth"
 )
 
 type StatusLine struct {
@@ -19,12 +19,14 @@ func (s StatusLine) View(width int) string {
 	if width < 30 {
 		return ""
 	}
-	result := fmt.Sprintf("   Execution Time: %.3fms ◆ Total Buffers: %s ◆ Total Rows: %s ",
+
+	line := "   Execution Time: %.3fms ◆ Total Buffers: %s ◆ Total Rows: %s "
+
+	result := fmt.Sprintf(line,
 		s.ExecutionTime,
 		formatUnderscores(s.TotalBuffers),
 		formatUnderscores(s.TotalRows),
 	)
-	additionalWidthNeeded := width - len(result)
-	result += strings.Repeat(" ", additionalWidthNeeded)
-	return style.Render(result) + "\n"
+
+	return style.Render(runewidth.FillRight(result, width)) + "\n"
 }

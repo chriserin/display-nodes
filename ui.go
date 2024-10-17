@@ -90,7 +90,6 @@ type Model struct {
 	nodes        []PlanNode
 	ctx          ProgramContext
 	DisplayNodes []PlanNode
-	Width        int
 	StatusLine   StatusLine
 }
 
@@ -157,7 +156,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		m.Width = msg.Width
+		m.ctx.Width = msg.Width
 	}
 
 	return m, nil
@@ -178,7 +177,7 @@ func displayedNodes(nodes []PlanNode, ctx ProgramContext) []PlanNode {
 func (m Model) View() string {
 	var buf strings.Builder
 
-	buf.WriteString(m.StatusLine.View(m.Width))
+	buf.WriteString(m.StatusLine.View(m.ctx.Width))
 
 	for i, node := range m.DisplayNodes {
 		buf.WriteString(node.View(i, m.ctx))

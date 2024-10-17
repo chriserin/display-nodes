@@ -12,6 +12,7 @@ type ProgramContext struct {
 	CursorStyle      Styles
 	ChildCursorStyle Styles
 	SelectedNode     PlanNode
+	Width            int
 }
 
 type Styles struct {

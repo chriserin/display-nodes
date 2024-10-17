@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/x/ansi"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
@@ -47,15 +48,22 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 	}
 
 	if ctx.JoinView && node.RelationName != "" {
-		buf.WriteString(styles.Relation.Render(node.RelationName) + " ")
+		buf.WriteString(styles.Relation.Render(node.RelationName))
 	} else {
-		buf.WriteString(styles.NodeName.Render(node.name() + " "))
+		buf.WriteString(styles.NodeName.Render(node.name()))
 	}
 
 	if ctx.DisplayRows {
 		buf.WriteString(node.rows(styles))
 	} else if ctx.DisplayBuffers {
 		buf.WriteString(node.buffers(styles))
+	}
+
+	result := buf.String()
+
+	needed := ctx.Width - ansi.StringWidth(result)
+	if needed > 0 {
+		buf.WriteString(styles.Everything.Render(strings.Repeat(" ", needed)))
 	}
 
 	buf.WriteString("\n")
@@ -77,12 +85,13 @@ func (node PlanNode) name() string {
 
 func (node PlanNode) buffers(styles Styles) string {
 	var buf strings.Builder
-	buf.WriteString(styles.Bracket.Render("Buffers["))
+	buf.WriteString(styles.Bracket.Render(" Buffers["))
 	buf.WriteString(styles.Everything.Render("total="))
 	buf.WriteString(styles.Value.Render(formatUnderscores(node.SharedBuffersRead + node.SharedBuffersHit)))
 	buf.WriteString(styles.Everything.Render(" read="))
 	buf.WriteString(styles.Value.Render(formatUnderscores(node.SharedBuffersRead)))
 	buf.WriteString(styles.Bracket.Render("]"))
+
 	return buf.String()
 }
 
@@ -97,7 +106,7 @@ func (node PlanNode) rows(styles Styles) string {
 
 	rowStatus := getRowStatus(percentOfActual, styles)
 
-	buf.WriteString(styles.Bracket.Render("Rows["))
+	buf.WriteString(styles.Bracket.Render(" Rows["))
 	buf.WriteString(styles.Everything.Render("p="))
 	buf.WriteString(styles.Value.Render(separatedPlanRows))
 	buf.WriteString(styles.Everything.Render(" "))
