@@ -20,6 +20,8 @@ type PlanNode struct {
 	RelationName      string
 	SharedBuffersRead int
 	SharedBuffersHit  int
+	IsGather          bool
+	Workers           int
 }
 
 func (node PlanNode) View(i int, ctx ProgramContext) string {
@@ -34,7 +36,7 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 	var styles Styles
 	if ctx.Cursor == i {
 		styles = ctx.CursorStyle
-	} else if ctx.SelectedNode.Position.LineNumber == viewPosition.Parent {
+	} else if ctx.SelectedNode.Position.Id == viewPosition.Parent {
 		styles = ctx.ChildCursorStyle
 	} else {
 		styles = ctx.NormalStyle
@@ -42,6 +44,13 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 
 	var buf strings.Builder
 	buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%2d ", i+1)))
+	if viewPosition.BelowGather {
+		buf.WriteString(styles.Gutter.Render("┃┃"))
+	} else if node.Workers > 0 {
+		buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%.2d", node.Workers)))
+	} else {
+		buf.WriteString("  ")
+	}
 
 	if ctx.Indent {
 		buf.WriteString(styles.Everything.Render(strings.Repeat("  ", viewPosition.Level-1)))

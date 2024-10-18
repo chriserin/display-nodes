@@ -4,13 +4,18 @@ import (
 	"encoding/json"
 	"os"
 	"slices"
+	"strings"
 )
 
 func main() {
 	decoded, executionTime := decodeJson(os.Stdin)
 	nodes := make([]PlanNode, 0, 1)
-	lineNumber := 0
-	extractPlanNodes(decoded, position{LineNumber: 0, Level: 0, Parent: 0}, position{LineNumber: 0, Level: 0, Parent: 0}, &lineNumber, &nodes)
+	id := 0
+	extractPlanNodes(decoded,
+		position{Id: 0, Level: 0, Parent: 0},
+		position{Id: 0, Level: 0, Parent: 0},
+		ParseContext{Id: &id, Nodes: &nodes},
+	)
 	runProgram(nodes, executionTime, InitProgramContext(nodes[0]))
 }
 
@@ -31,13 +36,20 @@ func decodeJson(data *os.File) (map[string]interface{}, float64) {
 }
 
 type position struct {
-	LineNumber int
-	Level      int
-	Parent     int
-	Display    bool
+	Id          int
+	Level       int
+	Parent      int
+	Display     bool
+	BelowGather bool
 }
 
-func extractPlanNodes(plan map[string]interface{}, parentPosition position, parentJoinPosition position, lineNumber *int, nodes *[]PlanNode) PlanNode {
+type ParseContext struct {
+	Id          *int
+	Nodes       *[]PlanNode
+	BelowGather bool
+}
+
+func extractPlanNodes(plan map[string]interface{}, parentPosition position, parentJoinPosition position, parseContext ParseContext) PlanNode {
 	nodeType := plan["Node Type"].(string)
 	planRows := plan["Plan Rows"].(float64)
 	actualRows := plan["Actual Rows"].(float64)
@@ -56,24 +68,38 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 	sharedReadBlocks := plan["Shared Read Blocks"].(float64)
 	sharedHitBlocks := plan["Shared Hit Blocks"].(float64)
 
+	workersLaunched, ok := plan["Workers Launched"].(float64)
+
 	plans := plan["Plans"]
 
-	*lineNumber = *lineNumber + 1
+	id := parseContext.Id
+	*id = *id + 1
+
+	isGather := strings.Contains(nodeType, "Gather")
+
+	var workers int
+	if isGather {
+		workers = int(workersLaunched) + 1
+	} else {
+		workers = 0
+	}
 
 	newPosition := position{
-		LineNumber: *lineNumber,
-		Level:      parentPosition.Level + 1,
-		Parent:     parentPosition.LineNumber,
-		Display:    true,
+		Id:          *id,
+		Level:       parentPosition.Level + 1,
+		Parent:      parentPosition.Id,
+		Display:     true,
+		BelowGather: parseContext.BelowGather,
 	}
 
 	var joinViewPosition position
-	if isJoinType(nodeType) || relationName != "" {
+	if isJoinType(nodeType) || relationName != "" || isGather {
 		joinViewPosition = position{
-			LineNumber: *lineNumber,
-			Level:      parentJoinPosition.Level + 1,
-			Parent:     parentJoinPosition.LineNumber,
-			Display:    true,
+			Id:          *id,
+			Level:       parentJoinPosition.Level + 1,
+			Parent:      parentJoinPosition.Id,
+			Display:     true,
+			BelowGather: parseContext.BelowGather,
 		}
 	} else {
 		joinViewPosition = parentJoinPosition
@@ -90,14 +116,18 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 		RelationName:      relationName,
 		SharedBuffersHit:  int(sharedHitBlocks),
 		SharedBuffersRead: int(sharedReadBlocks),
+		IsGather:          isGather,
+		Workers:           workers,
 	}
+
+	nodes := parseContext.Nodes
 
 	*nodes = append(*nodes, extractedNode)
 
 	if plans != nil {
 		for _, plan := range plans.([]interface{}) {
 			if plan != nil {
-				extractPlanNodes(plan.(map[string]interface{}), newPosition, joinViewPosition, lineNumber, nodes)
+				extractPlanNodes(plan.(map[string]interface{}), newPosition, joinViewPosition, ParseContext{Id: id, Nodes: nodes, BelowGather: isGather || parseContext.BelowGather})
 			}
 		}
 	}
