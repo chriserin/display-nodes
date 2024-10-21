@@ -14,19 +14,21 @@ import (
 // keyMap defines a set of keybindings. To work for help it must satisfy
 // key.Map. It could also very easily be a map[string]key.Binding.
 type keyMap struct {
-	AltOn          key.Binding
-	AltOff         key.Binding
-	IndentToggle   key.Binding
-	Up             key.Binding
-	Down           key.Binding
-	Help           key.Binding
-	Quit           key.Binding
-	JoinView       key.Binding
-	ToggleRows     key.Binding
-	ToggleBuffers  key.Binding
-	ToggleCost     key.Binding
-	ToggleTimes    key.Binding
-	ToggleParallel key.Binding
+	AltOn           key.Binding
+	AltOff          key.Binding
+	IndentToggle    key.Binding
+	Up              key.Binding
+	Down            key.Binding
+	Help            key.Binding
+	Quit            key.Binding
+	JoinView        key.Binding
+	ToggleRows      key.Binding
+	ToggleBuffers   key.Binding
+	ToggleCost      key.Binding
+	ToggleTimes     key.Binding
+	NextStatDisplay key.Binding
+	PrevStatDisplay key.Binding
+	ToggleParallel  key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
@@ -39,7 +41,7 @@ func (k keyMap) ShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.ToggleParallel}, // first column
+		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.NextStatDisplay, k.PrevStatDisplay, k.ToggleParallel}, // first column
 		{k.Help, k.Quit}, // second column
 	}
 }
@@ -92,6 +94,14 @@ var keys = keyMap{
 	ToggleTimes: key.NewBinding(
 		key.WithKeys("T"),
 		key.WithHelp("T", "Toggle Times"),
+	),
+	NextStatDisplay: key.NewBinding(
+		key.WithKeys("]"),
+		key.WithHelp("]", "Next Stat Display"),
+	),
+	PrevStatDisplay: key.NewBinding(
+		key.WithKeys("["),
+		key.WithHelp("[", "Previous Stat Display"),
 	),
 	ToggleParallel: key.NewBinding(
 		key.WithKeys("P"),
@@ -185,6 +195,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.StatDisplay = DisplayNothing
 			} else {
 				m.ctx.StatDisplay = DisplayTime
+			}
+		case key.Matches(msg, m.keys.NextStatDisplay):
+			m.ctx.StatDisplay = (m.ctx.StatDisplay + 1) % 5
+		case key.Matches(msg, m.keys.PrevStatDisplay):
+			if m.ctx.StatDisplay == 0 {
+				m.ctx.StatDisplay = 4
+			} else {
+				m.ctx.StatDisplay = (m.ctx.StatDisplay - 1) % 5
 			}
 		case key.Matches(msg, m.keys.ToggleParallel):
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
