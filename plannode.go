@@ -53,7 +53,7 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 		if viewPosition.BelowGather {
 			buf.WriteString(styles.Gutter.Render("┃┃ "))
 		} else if node.Workers > 0 {
-			buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%.2d ", node.Workers)))
+			buf.WriteString(styles.Workers.Render(fmt.Sprintf("%.2d ", node.Workers)))
 		} else {
 			buf.WriteString("   ")
 		}

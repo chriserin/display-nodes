@@ -34,6 +34,7 @@ type Styles struct {
 	Value      lipgloss.Style
 	Warning    lipgloss.Style
 	Caution    lipgloss.Style
+	Workers    lipgloss.Style
 }
 
 func InitProgramContext(selectedNode PlanNode) ProgramContext {
@@ -59,6 +60,7 @@ func NormalStyles() Styles {
 	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#c3e88d"))
 	warningStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#c53b53"))
 	cautionStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#ffc777"))
+	workersStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#fca7ea"))
 
 	return Styles{
 		Gutter:     gutterStyle,
@@ -69,6 +71,7 @@ func NormalStyles() Styles {
 		Value:      valueStyle,
 		Warning:    warningStyle,
 		Caution:    cautionStyle,
+		Workers:    workersStyle,
 	}
 }
 
@@ -84,6 +87,7 @@ func CursorStyle(style Styles) Styles {
 		Value:      style.Value.Background(background),
 		Warning:    style.Warning.Background(background),
 		Caution:    style.Caution.Background(background),
+		Workers:    style.Workers.Background(background),
 	}
 }
 
@@ -99,5 +103,6 @@ func ChildCursorStyle(style Styles) Styles {
 		Value:      style.Value.Background(background),
 		Warning:    style.Warning.Background(background),
 		Caution:    style.Caution.Background(background),
+		Workers:    style.Workers.Background(background),
 	}
 }

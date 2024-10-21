@@ -4,7 +4,7 @@ Display Nodes is a tool that enhances the readability of postgres query plans.
 
 ## TODO
 
-- [x] ~Status Bar (contains full plan attributes: execution time/ buffers)~
+- [x] Status Bar (contains full plan attributes: execution time/ buffers)
 - [x] Refine rows output per node
 - [x] toggle rows output
 - [x] create buffers output per node
@@ -15,3 +15,4 @@ Display Nodes is a tool that enhances the readability of postgres query plans.
 - [x] Whole line highlight
 - [ ] refine status bar display
 - [x] display parallelism
+- [ ] Cycle through stats displays
