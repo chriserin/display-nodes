@@ -12,6 +12,22 @@ const (
 	DisplayTime
 )
 
+func (s StatView) String() string {
+	switch s {
+	case DisplayNothing:
+		return ""
+	case DisplayRows:
+		return "Rows"
+	case DisplayBuffers:
+		return "Buffers"
+	case DisplayCost:
+		return "Cost"
+	case DisplayTime:
+		return "Time"
+	}
+	return ""
+}
+
 type ProgramContext struct {
 	Indent           bool
 	Cursor           int

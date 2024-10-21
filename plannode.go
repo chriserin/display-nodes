@@ -105,7 +105,7 @@ func (node PlanNode) name() string {
 
 func (node PlanNode) buffers(styles Styles) string {
 	var buf strings.Builder
-	buf.WriteString(styles.Bracket.Render(" Buffers["))
+	buf.WriteString(styles.Bracket.Render(" ["))
 	buf.WriteString(styles.Everything.Render("total="))
 	buf.WriteString(styles.Value.Render(formatUnderscores(node.SharedBuffersRead + node.SharedBuffersHit)))
 	buf.WriteString(styles.Everything.Render(" read="))
@@ -117,7 +117,7 @@ func (node PlanNode) buffers(styles Styles) string {
 
 func (node PlanNode) costs(styles Styles) string {
 	var buf strings.Builder
-	buf.WriteString(styles.Bracket.Render(" Costs["))
+	buf.WriteString(styles.Bracket.Render(" ["))
 	buf.WriteString(styles.Everything.Render("startup="))
 	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.StartupCost)))
 	buf.WriteString(styles.Everything.Render(" total="))
@@ -129,7 +129,7 @@ func (node PlanNode) costs(styles Styles) string {
 
 func (node PlanNode) times(styles Styles) string {
 	var buf strings.Builder
-	buf.WriteString(styles.Bracket.Render(" Times["))
+	buf.WriteString(styles.Bracket.Render(" ["))
 	buf.WriteString(styles.Everything.Render("startup="))
 	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.StartupTime)))
 	buf.WriteString(styles.Everything.Render(" total="))
@@ -150,7 +150,7 @@ func (node PlanNode) rows(styles Styles) string {
 
 	rowStatus := getRowStatus(percentOfActual, styles)
 
-	buf.WriteString(styles.Bracket.Render(" Rows["))
+	buf.WriteString(styles.Bracket.Render(" ["))
 	buf.WriteString(styles.Everything.Render("p="))
 	buf.WriteString(styles.Value.Render(separatedPlanRows))
 	buf.WriteString(styles.Everything.Render(" "))

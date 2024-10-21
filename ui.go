@@ -232,7 +232,7 @@ func displayedNodes(nodes []PlanNode, ctx ProgramContext) []PlanNode {
 func (m Model) View() string {
 	var buf strings.Builder
 
-	buf.WriteString(m.StatusLine.View(m.ctx.Width))
+	buf.WriteString(m.StatusLine.View(m.ctx))
 
 	for i, node := range m.DisplayNodes {
 		buf.WriteString(node.View(i, m.ctx))
