@@ -8,8 +8,8 @@ Display Nodes is a tool that enhances the readability of postgres query plans.
 - [x] Refine rows output per node
 - [x] toggle rows output
 - [x] create buffers output per node
-- [ ] create time output per node
-- [ ] create cost output per node
+- [x] create time output per node
+- [x] create cost output per node
 - [ ] selected node details window
 - [ ] display node type with relation name
 - [x] Whole line highlight
