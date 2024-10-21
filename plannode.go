@@ -22,6 +22,8 @@ type PlanNode struct {
 	SharedBuffersHit  int
 	IsGather          bool
 	Workers           int
+	StartupCost       float64
+	TotalCost         float64
 }
 
 func (node PlanNode) View(i int, ctx ProgramContext) string {
@@ -69,6 +71,8 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 		buf.WriteString(node.rows(styles))
 	} else if ctx.StatDisplay == DisplayBuffers {
 		buf.WriteString(node.buffers(styles))
+	} else if ctx.StatDisplay == DisplayCost {
+		buf.WriteString(node.costs(styles))
 	}
 
 	result := buf.String()
@@ -102,6 +106,18 @@ func (node PlanNode) buffers(styles Styles) string {
 	buf.WriteString(styles.Value.Render(formatUnderscores(node.SharedBuffersRead + node.SharedBuffersHit)))
 	buf.WriteString(styles.Everything.Render(" read="))
 	buf.WriteString(styles.Value.Render(formatUnderscores(node.SharedBuffersRead)))
+	buf.WriteString(styles.Bracket.Render("]"))
+
+	return buf.String()
+}
+
+func (node PlanNode) costs(styles Styles) string {
+	var buf strings.Builder
+	buf.WriteString(styles.Bracket.Render(" Costs["))
+	buf.WriteString(styles.Everything.Render("startup="))
+	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.StartupCost)))
+	buf.WriteString(styles.Everything.Render(" total="))
+	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.TotalCost)))
 	buf.WriteString(styles.Bracket.Render("]"))
 
 	return buf.String()
@@ -143,5 +159,9 @@ func getRowStatus(percentOfActual float32, styles Styles) string {
 var printer *message.Printer = message.NewPrinter(language.English)
 
 func formatUnderscores(value int) string {
-	return strings.Replace(printer.Sprintf("%d", value), ",", "_", 1)
+	return strings.Replace(printer.Sprintf("%d", value), ",", "_", -1)
+}
+
+func formatUnderscoresFloat(value float64) string {
+	return strings.Replace(printer.Sprintf("%.2f", value), ",", "_", -1)
 }

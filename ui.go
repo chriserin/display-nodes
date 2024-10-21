@@ -24,6 +24,7 @@ type keyMap struct {
 	JoinView       key.Binding
 	ToggleRows     key.Binding
 	ToggleBuffers  key.Binding
+	ToggleCost     key.Binding
 	ToggleParallel key.Binding
 }
 
@@ -37,7 +38,7 @@ func (k keyMap) ShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleParallel}, // first column
+		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleParallel}, // first column
 		{k.Help, k.Quit}, // second column
 	}
 }
@@ -82,6 +83,10 @@ var keys = keyMap{
 	ToggleBuffers: key.NewBinding(
 		key.WithKeys("B"),
 		key.WithHelp("B", "Toggle Buffers"),
+	),
+	ToggleCost: key.NewBinding(
+		key.WithKeys("C"),
+		key.WithHelp("C", "Toggle Costs"),
 	),
 	ToggleParallel: key.NewBinding(
 		key.WithKeys("P"),
@@ -163,6 +168,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.StatDisplay = DisplayNothing
 			} else {
 				m.ctx.StatDisplay = DisplayBuffers
+			}
+		case key.Matches(msg, m.keys.ToggleCost):
+			if m.ctx.StatDisplay == DisplayCost {
+				m.ctx.StatDisplay = DisplayNothing
+			} else {
+				m.ctx.StatDisplay = DisplayCost
 			}
 		case key.Matches(msg, m.keys.ToggleParallel):
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
