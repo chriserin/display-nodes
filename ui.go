@@ -14,16 +14,17 @@ import (
 // keyMap defines a set of keybindings. To work for help it must satisfy
 // key.Map. It could also very easily be a map[string]key.Binding.
 type keyMap struct {
-	AltOn         key.Binding
-	AltOff        key.Binding
-	IndentToggle  key.Binding
-	Up            key.Binding
-	Down          key.Binding
-	Help          key.Binding
-	Quit          key.Binding
-	JoinView      key.Binding
-	ToggleRows    key.Binding
-	ToggleBuffers key.Binding
+	AltOn          key.Binding
+	AltOff         key.Binding
+	IndentToggle   key.Binding
+	Up             key.Binding
+	Down           key.Binding
+	Help           key.Binding
+	Quit           key.Binding
+	JoinView       key.Binding
+	ToggleRows     key.Binding
+	ToggleBuffers  key.Binding
+	ToggleParallel key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
@@ -36,7 +37,7 @@ func (k keyMap) ShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle, k.ToggleRows, k.ToggleBuffers}, // first column
+		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleParallel}, // first column
 		{k.Help, k.Quit}, // second column
 	}
 }
@@ -81,6 +82,10 @@ var keys = keyMap{
 	ToggleBuffers: key.NewBinding(
 		key.WithKeys("B"),
 		key.WithHelp("B", "Toggle Buffers"),
+	),
+	ToggleParallel: key.NewBinding(
+		key.WithKeys("P"),
+		key.WithHelp("P", "Toggle Parallel"),
 	),
 }
 
@@ -151,6 +156,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.DisplayRows = !m.ctx.DisplayRows
 		case key.Matches(msg, m.keys.ToggleBuffers):
 			m.ctx.DisplayBuffers = !m.ctx.DisplayBuffers
+		case key.Matches(msg, m.keys.ToggleParallel):
+			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
 		default:
 			return m, tea.Println(msg)
 		}

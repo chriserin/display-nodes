@@ -44,12 +44,15 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 
 	var buf strings.Builder
 	buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%2d ", i+1)))
-	if viewPosition.BelowGather {
-		buf.WriteString(styles.Gutter.Render("┃┃"))
-	} else if node.Workers > 0 {
-		buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%.2d", node.Workers)))
-	} else {
-		buf.WriteString("  ")
+
+	if ctx.DisplayParallel {
+		if viewPosition.BelowGather {
+			buf.WriteString(styles.Gutter.Render("┃┃ "))
+		} else if node.Workers > 0 {
+			buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%.2d ", node.Workers)))
+		} else {
+			buf.WriteString("   ")
+		}
 	}
 
 	if ctx.Indent {

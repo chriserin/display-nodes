@@ -8,6 +8,7 @@ type ProgramContext struct {
 	JoinView         bool
 	DisplayRows      bool
 	DisplayBuffers   bool
+	DisplayParallel  bool
 	NormalStyle      Styles
 	CursorStyle      Styles
 	ChildCursorStyle Styles
