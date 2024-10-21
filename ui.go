@@ -153,9 +153,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.Cursor = 0
 			m.ctx.SelectedNode = m.DisplayNodes[m.ctx.Cursor]
 		case key.Matches(msg, m.keys.ToggleRows):
-			m.ctx.DisplayRows = !m.ctx.DisplayRows
+			if m.ctx.StatDisplay == DisplayRows {
+				m.ctx.StatDisplay = DisplayNothing
+			} else {
+				m.ctx.StatDisplay = DisplayRows
+			}
 		case key.Matches(msg, m.keys.ToggleBuffers):
-			m.ctx.DisplayBuffers = !m.ctx.DisplayBuffers
+			if m.ctx.StatDisplay == DisplayBuffers {
+				m.ctx.StatDisplay = DisplayNothing
+			} else {
+				m.ctx.StatDisplay = DisplayBuffers
+			}
 		case key.Matches(msg, m.keys.ToggleParallel):
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
 		default:

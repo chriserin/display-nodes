@@ -65,9 +65,9 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 		buf.WriteString(styles.NodeName.Render(node.name()))
 	}
 
-	if ctx.DisplayRows {
+	if ctx.StatDisplay == DisplayRows {
 		buf.WriteString(node.rows(styles))
-	} else if ctx.DisplayBuffers {
+	} else if ctx.StatDisplay == DisplayBuffers {
 		buf.WriteString(node.buffers(styles))
 	}
 

@@ -2,12 +2,21 @@ package main
 
 import "github.com/charmbracelet/lipgloss"
 
+type StatView int
+
+const (
+	DisplayNothing StatView = iota
+	DisplayRows
+	DisplayBuffers
+	DisplayCost
+	DisplayTime
+)
+
 type ProgramContext struct {
 	Indent           bool
 	Cursor           int
 	JoinView         bool
-	DisplayRows      bool
-	DisplayBuffers   bool
+	StatDisplay      StatView
 	DisplayParallel  bool
 	NormalStyle      Styles
 	CursorStyle      Styles
