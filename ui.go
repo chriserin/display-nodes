@@ -25,6 +25,7 @@ type keyMap struct {
 	ToggleRows     key.Binding
 	ToggleBuffers  key.Binding
 	ToggleCost     key.Binding
+	ToggleTimes    key.Binding
 	ToggleParallel key.Binding
 }
 
@@ -38,7 +39,7 @@ func (k keyMap) ShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleParallel}, // first column
+		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.ToggleParallel}, // first column
 		{k.Help, k.Quit}, // second column
 	}
 }
@@ -87,6 +88,10 @@ var keys = keyMap{
 	ToggleCost: key.NewBinding(
 		key.WithKeys("C"),
 		key.WithHelp("C", "Toggle Costs"),
+	),
+	ToggleTimes: key.NewBinding(
+		key.WithKeys("T"),
+		key.WithHelp("T", "Toggle Times"),
 	),
 	ToggleParallel: key.NewBinding(
 		key.WithKeys("P"),
@@ -174,6 +179,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.StatDisplay = DisplayNothing
 			} else {
 				m.ctx.StatDisplay = DisplayCost
+			}
+		case key.Matches(msg, m.keys.ToggleTimes):
+			if m.ctx.StatDisplay == DisplayTime {
+				m.ctx.StatDisplay = DisplayNothing
+			} else {
+				m.ctx.StatDisplay = DisplayTime
 			}
 		case key.Matches(msg, m.keys.ToggleParallel):
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel

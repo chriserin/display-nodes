@@ -69,6 +69,8 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 	sharedHitBlocks := plan["Shared Hit Blocks"].(float64)
 	startupCost := plan["Startup Cost"].(float64)
 	totalCost := plan["Total Cost"].(float64)
+	startupTime := plan["Actual Startup Time"].(float64)
+	totalTime := plan["Actual Total Time"].(float64)
 
 	workersLaunched, ok := plan["Workers Launched"].(float64)
 
@@ -122,6 +124,8 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 		Workers:           workers,
 		StartupCost:       startupCost,
 		TotalCost:         totalCost,
+		StartupTime:       startupTime,
+		TotalTime:         totalTime,
 	}
 
 	nodes := parseContext.Nodes

@@ -24,6 +24,8 @@ type PlanNode struct {
 	Workers           int
 	StartupCost       float64
 	TotalCost         float64
+	StartupTime       float64
+	TotalTime         float64
 }
 
 func (node PlanNode) View(i int, ctx ProgramContext) string {
@@ -73,6 +75,8 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 		buf.WriteString(node.buffers(styles))
 	} else if ctx.StatDisplay == DisplayCost {
 		buf.WriteString(node.costs(styles))
+	} else if ctx.StatDisplay == DisplayTime {
+		buf.WriteString(node.times(styles))
 	}
 
 	result := buf.String()
@@ -118,6 +122,18 @@ func (node PlanNode) costs(styles Styles) string {
 	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.StartupCost)))
 	buf.WriteString(styles.Everything.Render(" total="))
 	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.TotalCost)))
+	buf.WriteString(styles.Bracket.Render("]"))
+
+	return buf.String()
+}
+
+func (node PlanNode) times(styles Styles) string {
+	var buf strings.Builder
+	buf.WriteString(styles.Bracket.Render(" Times["))
+	buf.WriteString(styles.Everything.Render("startup="))
+	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.StartupTime)))
+	buf.WriteString(styles.Everything.Render(" total="))
+	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.TotalTime)))
 	buf.WriteString(styles.Bracket.Render("]"))
 
 	return buf.String()
