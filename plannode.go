@@ -69,21 +69,20 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 		buf.WriteString(styles.NodeName.Render(node.name()))
 	}
 
-	if ctx.StatDisplay == DisplayRows {
-		buf.WriteString(node.rows(styles))
-	} else if ctx.StatDisplay == DisplayBuffers {
-		buf.WriteString(node.buffers(styles))
-	} else if ctx.StatDisplay == DisplayCost {
-		buf.WriteString(node.costs(styles))
-	} else if ctx.StatDisplay == DisplayTime {
-		buf.WriteString(node.times(styles))
-	}
-
 	result := buf.String()
 
 	needed := ctx.Width - ansi.StringWidth(result)
-	if needed > 0 {
-		buf.WriteString(styles.Everything.Render(strings.Repeat(" ", needed)))
+
+	if ctx.StatDisplay == DisplayRows {
+		buf.WriteString(node.rows(styles, needed))
+	} else if ctx.StatDisplay == DisplayBuffers {
+		buf.WriteString(node.buffers(styles, needed))
+	} else if ctx.StatDisplay == DisplayCost {
+		buf.WriteString(node.costs(styles, needed))
+	} else if ctx.StatDisplay == DisplayTime {
+		buf.WriteString(node.times(styles, needed))
+	} else if ctx.StatDisplay == DisplayNothing {
+		buf.WriteString(styles.Everything.Render(fmt.Sprintf("%*s", needed, "")))
 	}
 
 	buf.WriteString("\n")
@@ -103,45 +102,67 @@ func (node PlanNode) name() string {
 	return strings.Trim(fmt.Sprintf("%s %s", node.PartialMode, node.NodeType), " ")
 }
 
-func (node PlanNode) buffers(styles Styles) string {
+func (node PlanNode) buffers(styles Styles, space int) string {
 	var buf strings.Builder
-	buf.WriteString(styles.Bracket.Render(" ["))
-	buf.WriteString(styles.Everything.Render("total="))
-	buf.WriteString(styles.Value.Render(formatUnderscores(node.SharedBuffersRead + node.SharedBuffersHit)))
-	buf.WriteString(styles.Everything.Render(" read="))
-	buf.WriteString(styles.Value.Render(formatUnderscores(node.SharedBuffersRead)))
-	buf.WriteString(styles.Bracket.Render("]"))
+	totalBuffers := formatUnderscores(node.SharedBuffersRead + node.SharedBuffersHit)
+	readBuffers := formatUnderscores(node.SharedBuffersRead)
+
+	if false {
+		buf.WriteString(styles.Bracket.Render(" ["))
+		buf.WriteString(styles.Everything.Render("total="))
+		buf.WriteString(totalBuffers)
+		buf.WriteString(styles.Everything.Render(" read="))
+		buf.WriteString(readBuffers)
+		buf.WriteString(styles.Bracket.Render("]"))
+	} else {
+		columns := fmt.Sprintf("%15s%15s", totalBuffers, readBuffers)
+		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
+	}
 
 	return buf.String()
 }
 
-func (node PlanNode) costs(styles Styles) string {
+func (node PlanNode) costs(styles Styles, space int) string {
+	startupCost := formatUnderscoresFloat(node.StartupCost)
+	totalCost := formatUnderscoresFloat(node.TotalCost)
+
 	var buf strings.Builder
-	buf.WriteString(styles.Bracket.Render(" ["))
-	buf.WriteString(styles.Everything.Render("startup="))
-	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.StartupCost)))
-	buf.WriteString(styles.Everything.Render(" total="))
-	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.TotalCost)))
-	buf.WriteString(styles.Bracket.Render("]"))
+	if false {
+		buf.WriteString(styles.Bracket.Render(" ["))
+		buf.WriteString(styles.Everything.Render("startup="))
+		buf.WriteString(styles.Value.Render(startupCost))
+		buf.WriteString(styles.Everything.Render(" total="))
+		buf.WriteString(styles.Value.Render(totalCost))
+		buf.WriteString(styles.Bracket.Render("]"))
+	} else {
+		columns := fmt.Sprintf("%15s%15s", startupCost, totalCost)
+		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
+	}
 
 	return buf.String()
 }
 
-func (node PlanNode) times(styles Styles) string {
+func (node PlanNode) times(styles Styles, space int) string {
+	startupTime := formatUnderscoresFloat(node.StartupTime)
+	totalTime := formatUnderscoresFloat(node.TotalTime)
+
 	var buf strings.Builder
-	buf.WriteString(styles.Bracket.Render(" ["))
-	buf.WriteString(styles.Everything.Render("startup="))
-	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.StartupTime)))
-	buf.WriteString(styles.Everything.Render(" total="))
-	buf.WriteString(styles.Value.Render(formatUnderscoresFloat(node.TotalTime)))
-	buf.WriteString(styles.Bracket.Render("]"))
+	if false {
+		buf.WriteString(styles.Bracket.Render(" ["))
+		buf.WriteString(styles.Everything.Render("startup="))
+		buf.WriteString(styles.Value.Render(startupTime))
+		buf.WriteString(styles.Everything.Render(" total="))
+		buf.WriteString(styles.Value.Render(totalTime))
+		buf.WriteString(styles.Bracket.Render("]"))
+	} else {
+		columns := fmt.Sprintf("%15s%15s", startupTime, totalTime)
+		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
+	}
 
 	return buf.String()
 }
 
-func (node PlanNode) rows(styles Styles) string {
-
-	var buf strings.Builder
+func (node PlanNode) rows(styles Styles, space int) string {
 
 	separatedPlanRows := formatUnderscores(node.PlanRows)
 	separatedActualRows := formatUnderscores(node.ActualRows)
@@ -150,14 +171,20 @@ func (node PlanNode) rows(styles Styles) string {
 
 	rowStatus := getRowStatus(percentOfActual, styles)
 
-	buf.WriteString(styles.Bracket.Render(" ["))
-	buf.WriteString(styles.Everything.Render("p="))
-	buf.WriteString(styles.Value.Render(separatedPlanRows))
-	buf.WriteString(styles.Everything.Render(" "))
-	buf.WriteString(styles.Everything.Render("a="))
-	buf.WriteString(styles.Value.Render(separatedActualRows))
-	buf.WriteString(rowStatus)
-	buf.WriteString(styles.Bracket.Render("]"))
+	var buf strings.Builder
+	if false {
+		buf.WriteString(styles.Bracket.Render(" ["))
+		buf.WriteString(styles.Everything.Render("p="))
+		buf.WriteString(styles.Value.Render(separatedPlanRows))
+		buf.WriteString(styles.Everything.Render(" "))
+		buf.WriteString(styles.Everything.Render("a="))
+		buf.WriteString(styles.Value.Render(separatedActualRows))
+		buf.WriteString(rowStatus)
+		buf.WriteString(styles.Bracket.Render("]"))
+	} else {
+		columns := fmt.Sprintf("%15s%15s", separatedPlanRows, separatedActualRows)
+		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
+	}
 
 	return buf.String()
 }

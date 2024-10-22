@@ -233,10 +233,27 @@ func (m Model) View() string {
 	var buf strings.Builder
 
 	buf.WriteString(m.StatusLine.View(m.ctx))
+	buf.WriteString(HeadersView(m.ctx))
 
 	for i, node := range m.DisplayNodes {
 		buf.WriteString(node.View(i, m.ctx))
 	}
 
 	return buf.String() + "\n" + m.help.View(m.keys)
+}
+
+func HeadersView(ctx ProgramContext) string {
+	var headers string
+	if ctx.StatDisplay == DisplayTime {
+		headers = fmt.Sprintf("%15s%15s ", "Startup", "Total")
+	} else if ctx.StatDisplay == DisplayCost {
+		headers = fmt.Sprintf("%15s%15s ", "Startup", "Total")
+	} else if ctx.StatDisplay == DisplayBuffers {
+		headers = fmt.Sprintf("%15s%15s ", "Total", "Read")
+	} else if ctx.StatDisplay == DisplayRows {
+		headers = fmt.Sprintf("%15s%15s ", "Planned", "Actual")
+	} else if ctx.StatDisplay == DisplayNothing {
+		headers = ""
+	}
+	return fmt.Sprintf("%*s\n", ctx.Width, headers)
 }
