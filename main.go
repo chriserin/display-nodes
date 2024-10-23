@@ -75,6 +75,11 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 		indexCond = ""
 	}
 
+	filter, ok := plan["Filter"].(string)
+	if !ok {
+		filter = ""
+	}
+
 	sharedReadBlocks := plan["Shared Read Blocks"].(float64)
 	sharedHitBlocks := plan["Shared Hit Blocks"].(float64)
 	startupCost := plan["Startup Cost"].(float64)
@@ -138,6 +143,7 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 		TotalTime:         totalTime,
 		IndexName:         indexName,
 		IndexCond:         indexCond,
+		Filter:            filter,
 	}
 
 	nodes := parseContext.Nodes

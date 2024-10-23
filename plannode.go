@@ -28,6 +28,7 @@ type PlanNode struct {
 	TotalTime         float64
 	IndexName         string
 	IndexCond         string
+	Filter            string
 }
 
 func (node PlanNode) View(i int, ctx ProgramContext) string {
@@ -218,12 +219,26 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 	buf.WriteString("\n")
 	buf.WriteString(strings.Repeat("-", ctx.Width))
 	buf.WriteString("\n")
-	buf.WriteString(ctx.NormalStyle.Relation.Render(node.RelationName))
-	buf.WriteString("\n")
-	buf.WriteString(ctx.NormalStyle.Everything.Render(node.IndexName))
-	buf.WriteString("\n")
-	buf.WriteString(ctx.NormalStyle.Everything.Render(node.IndexCond))
-	buf.WriteString("\n")
+	if node.RelationName != "" {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Relation Name: "))
+		buf.WriteString(ctx.NormalStyle.Relation.Render(node.RelationName))
+		buf.WriteString("\n")
+	}
+	if node.IndexName != "" {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Index Name: "))
+		buf.WriteString(ctx.NormalStyle.Everything.Render(node.IndexName))
+		buf.WriteString("\n")
+	}
+	if node.IndexCond != "" {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Index Cond: "))
+		buf.WriteString(ctx.NormalStyle.Everything.Render(node.IndexCond))
+		buf.WriteString("\n")
+	}
+	if node.Filter != "" {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Filter: "))
+		buf.WriteString(ctx.NormalStyle.Everything.Render(node.Filter))
+		buf.WriteString("\n")
+	}
 
 	return buf.String()
 }

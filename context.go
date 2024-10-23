@@ -38,6 +38,7 @@ type ProgramContext struct {
 	CursorStyle      Styles
 	ChildCursorStyle Styles
 	StatusStyles     StatusStyles
+	DetailStyles     DetailStyles
 	SelectedNode     PlanNode
 	Width            int
 }
@@ -60,6 +61,10 @@ type StatusStyles struct {
 	AltNormal lipgloss.Style
 }
 
+type DetailStyles struct {
+	Label lipgloss.Style
+}
+
 func InitProgramContext(selectedNode PlanNode) ProgramContext {
 	normal := NormalStyles()
 
@@ -72,6 +77,7 @@ func InitProgramContext(selectedNode PlanNode) ProgramContext {
 		ChildCursorStyle: ChildCursorStyle(normal),
 		SelectedNode:     selectedNode,
 		StatusStyles:     StatusLineStyles(),
+		DetailStyles:     DetailViewStyles(),
 	}
 }
 
@@ -89,6 +95,12 @@ func StatusLineStyles() StatusStyles {
 		Value:     value,
 		Normal:    normal,
 		AltNormal: altNormal,
+	}
+}
+
+func DetailViewStyles() DetailStyles {
+	return DetailStyles{
+		Label: lipgloss.NewStyle().Bold(true),
 	}
 }
 
