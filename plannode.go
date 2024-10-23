@@ -27,6 +27,7 @@ type PlanNode struct {
 	StartupTime       float64
 	TotalTime         float64
 	IndexName         string
+	IndexCond         string
 }
 
 func (node PlanNode) View(i int, ctx ProgramContext) string {
@@ -220,6 +221,8 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 	buf.WriteString(ctx.NormalStyle.Relation.Render(node.RelationName))
 	buf.WriteString("\n")
 	buf.WriteString(ctx.NormalStyle.Everything.Render(node.IndexName))
+	buf.WriteString("\n")
+	buf.WriteString(ctx.NormalStyle.Everything.Render(node.IndexCond))
 	buf.WriteString("\n")
 
 	return buf.String()
