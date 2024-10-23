@@ -208,3 +208,16 @@ func formatUnderscores(value int) string {
 func formatUnderscoresFloat(value float64) string {
 	return strings.Replace(printer.Sprintf("%.2f", value), ",", "_", -1)
 }
+
+func (node PlanNode) Content(ctx ProgramContext) string {
+	var buf strings.Builder
+
+	buf.WriteString(ctx.NormalStyle.NodeName.Render(node.name()))
+	buf.WriteString("\n")
+	buf.WriteString(strings.Repeat("-", ctx.Width))
+	buf.WriteString("\n")
+	buf.WriteString(ctx.NormalStyle.Relation.Render(node.RelationName))
+	buf.WriteString("\n")
+
+	return buf.String()
+}

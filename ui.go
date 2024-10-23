@@ -6,9 +6,11 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/viewport"
 )
 
 // keyMap defines a set of keybindings. To work for help it must satisfy
@@ -110,16 +112,24 @@ var keys = keyMap{
 }
 
 type Model struct {
-	keys         keyMap
-	help         help.Model
-	nodes        []PlanNode
-	ctx          ProgramContext
-	DisplayNodes []PlanNode
-	StatusLine   StatusLine
+	keys            keyMap
+	help            help.Model
+	nodes           []PlanNode
+	ctx             ProgramContext
+	DisplayNodes    []PlanNode
+	StatusLine      StatusLine
+	detailsViewport viewport.Model
 }
 
 func runProgram(nodes []PlanNode, executionTime float64, ctx ProgramContext) {
-	p := tea.NewProgram(
+
+	vp := viewport.New(80, 10)
+	vp.Style = lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		PaddingRight(2).PaddingLeft(2)
+
+	program := tea.NewProgram(
 		Model{
 			nodes:        nodes,
 			ctx:          ctx,
@@ -131,9 +141,10 @@ func runProgram(nodes []PlanNode, executionTime float64, ctx ProgramContext) {
 				TotalBuffers:  nodes[0].SharedBuffersHit + nodes[0].SharedBuffersRead,
 				TotalRows:     nodes[0].ActualRows,
 			},
+			detailsViewport: vp,
 		})
 
-	if _, err := p.Run(); err != nil {
+	if _, err := program.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
@@ -238,6 +249,12 @@ func (m Model) View() string {
 	for i, node := range m.DisplayNodes {
 		buf.WriteString(node.View(i, m.ctx))
 	}
+
+	m.detailsViewport.Width = m.ctx.Width - 3
+	m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
+
+	buf.WriteString("\n")
+	buf.WriteString(m.detailsViewport.View())
 	buf.WriteString("\n")
 	buf.WriteString(m.help.View(m.keys))
 
