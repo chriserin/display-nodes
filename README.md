@@ -10,9 +10,9 @@ Display Nodes is a tool that enhances the readability of postgres query plans.
 - [x] create buffers output per node
 - [x] create time output per node
 - [x] create cost output per node
-- [ ] selected node details window
-- [ ] display node type with relation name
+- [x] selected node details window
 - [x] Whole line highlight
-- [ ] refine status bar display
+- [x] refine status bar display
 - [x] display parallelism
-- [ ] Cycle through stats displays
+- [x] Cycle through stats displays
+- [ ] display node type with relation name
