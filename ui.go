@@ -238,8 +238,10 @@ func (m Model) View() string {
 	for i, node := range m.DisplayNodes {
 		buf.WriteString(node.View(i, m.ctx))
 	}
+	buf.WriteString("\n")
+	buf.WriteString(m.help.View(m.keys))
 
-	return buf.String() + "\n" + m.help.View(m.keys)
+	return buf.String()
 }
 
 func HeadersView(ctx ProgramContext) string {
