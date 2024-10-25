@@ -67,6 +67,8 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 	}
 
 	if ctx.JoinView && node.RelationName != "" {
+		buf.WriteString(styles.NodeName.Render(node.abbrevName()))
+		buf.WriteString(" - ")
 		buf.WriteString(styles.Relation.Render(node.RelationName))
 	} else {
 		buf.WriteString(styles.NodeName.Render(node.name()))
@@ -99,6 +101,20 @@ func (node PlanNode) Display(ctx ProgramContext) bool {
 	} else {
 		return node.Position.Display
 	}
+}
+
+func (node PlanNode) abbrevName() string {
+	switch node.NodeType {
+	case "Index Only Scan":
+		return "IOS"
+	case "Index Scan":
+		return "IS"
+	case "Seq Scan":
+		return "SS"
+	case "Bitmap Heap Scan":
+		return "BHS"
+	}
+	return ""
 }
 
 func (node PlanNode) name() string {
@@ -215,6 +231,10 @@ func formatUnderscoresFloat(value float64) string {
 func (node PlanNode) Content(ctx ProgramContext) string {
 	var buf strings.Builder
 
+	if node.abbrevName() != "" {
+		buf.WriteString(ctx.NormalStyle.NodeName.Render(node.abbrevName()))
+		buf.WriteString(" - ")
+	}
 	buf.WriteString(ctx.NormalStyle.NodeName.Render(node.name()))
 	buf.WriteString("\n")
 	buf.WriteString(strings.Repeat("-", ctx.Width))
