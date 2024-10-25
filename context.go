@@ -62,7 +62,8 @@ type StatusStyles struct {
 }
 
 type DetailStyles struct {
-	Label lipgloss.Style
+	Label   lipgloss.Style
+	Warning lipgloss.Style
 }
 
 func InitProgramContext(selectedNode PlanNode) ProgramContext {
@@ -100,7 +101,8 @@ func StatusLineStyles() StatusStyles {
 
 func DetailViewStyles() DetailStyles {
 	return DetailStyles{
-		Label: lipgloss.NewStyle().Bold(true),
+		Label:   lipgloss.NewStyle().Bold(true),
+		Warning: lipgloss.NewStyle().Background(lipgloss.Color("#880000")),
 	}
 }
 

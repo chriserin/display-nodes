@@ -33,6 +33,8 @@ type PlanNode struct {
 	ParentRelationship string
 	ParentIsNestedLoop bool
 	ActualLoops        int
+	TempReadBlocks     int
+	TempWriteBlocks    int
 }
 
 func (node PlanNode) View(i int, ctx ProgramContext) string {
@@ -253,6 +255,16 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 	buf.WriteString("\n")
 	buf.WriteString(strings.Repeat("-", ctx.Width))
 	buf.WriteString("\n")
+	if node.TempReadBlocks > 0 {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Temp Read Blocks: "))
+		buf.WriteString(ctx.DetailStyles.Warning.Render(strconv.Itoa(node.TempReadBlocks)))
+		buf.WriteString("\n")
+	}
+	if node.TempWriteBlocks > 0 {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Temp Write Blocks: "))
+		buf.WriteString(ctx.DetailStyles.Warning.Render(strconv.Itoa(node.TempWriteBlocks)))
+		buf.WriteString("\n")
+	}
 	buf.WriteString(ctx.DetailStyles.Label.Render("Actual Loops: "))
 	buf.WriteString(ctx.NormalStyle.Everything.Render(strconv.Itoa(node.ActualLoops)))
 	buf.WriteString("\n")

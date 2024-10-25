@@ -82,6 +82,8 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 	}
 
 	actualLoops, ok := plan["Actual Loops"].(float64)
+	tempReadBlocks, ok := plan["Temp Read Blocks"].(float64)
+	tempWriteBlocks, ok := plan["Temp Write Blocks"].(float64)
 
 	parentRelationship, ok := plan["Parent Relationship"].(string)
 	if !ok {
@@ -155,6 +157,8 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 		ParentRelationship: parentRelationship,
 		ParentIsNestedLoop: parseContext.ParentNestedLoop,
 		ActualLoops:        int(actualLoops),
+		TempReadBlocks:     int(tempReadBlocks),
+		TempWriteBlocks:    int(tempWriteBlocks),
 	}
 
 	nodes := parseContext.Nodes
