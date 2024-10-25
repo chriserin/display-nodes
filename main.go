@@ -44,9 +44,10 @@ type position struct {
 }
 
 type ParseContext struct {
-	Id          *int
-	Nodes       *[]PlanNode
-	BelowGather bool
+	Id               *int
+	Nodes            *[]PlanNode
+	BelowGather      bool
+	ParentNestedLoop bool
 }
 
 func extractPlanNodes(plan map[string]interface{}, parentPosition position, parentJoinPosition position, parseContext ParseContext) PlanNode {
@@ -78,6 +79,13 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 	filter, ok := plan["Filter"].(string)
 	if !ok {
 		filter = ""
+	}
+
+	actualLoops, ok := plan["Actual Loops"].(float64)
+
+	parentRelationship, ok := plan["Parent Relationship"].(string)
+	if !ok {
+		parentRelationship = ""
 	}
 
 	sharedReadBlocks := plan["Shared Read Blocks"].(float64)
@@ -126,24 +134,27 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 	}
 
 	extractedNode := PlanNode{
-		NodeType:          nodeType,
-		PlanRows:          int(planRows),
-		ActualRows:        int(actualRows),
-		PartialMode:       partialMode,
-		Position:          newPosition,
-		JoinViewPosition:  joinViewPosition,
-		RelationName:      relationName,
-		SharedBuffersHit:  int(sharedHitBlocks),
-		SharedBuffersRead: int(sharedReadBlocks),
-		IsGather:          isGather,
-		Workers:           workers,
-		StartupCost:       startupCost,
-		TotalCost:         totalCost,
-		StartupTime:       startupTime,
-		TotalTime:         totalTime,
-		IndexName:         indexName,
-		IndexCond:         indexCond,
-		Filter:            filter,
+		NodeType:           nodeType,
+		PlanRows:           int(planRows),
+		ActualRows:         int(actualRows),
+		PartialMode:        partialMode,
+		Position:           newPosition,
+		JoinViewPosition:   joinViewPosition,
+		RelationName:       relationName,
+		SharedBuffersHit:   int(sharedHitBlocks),
+		SharedBuffersRead:  int(sharedReadBlocks),
+		IsGather:           isGather,
+		Workers:            workers,
+		StartupCost:        startupCost,
+		TotalCost:          totalCost,
+		StartupTime:        startupTime,
+		TotalTime:          totalTime,
+		IndexName:          indexName,
+		IndexCond:          indexCond,
+		Filter:             filter,
+		ParentRelationship: parentRelationship,
+		ParentIsNestedLoop: parseContext.ParentNestedLoop,
+		ActualLoops:        int(actualLoops),
 	}
 
 	nodes := parseContext.Nodes
@@ -153,7 +164,12 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 	if plans != nil {
 		for _, plan := range plans.([]interface{}) {
 			if plan != nil {
-				extractPlanNodes(plan.(map[string]interface{}), newPosition, joinViewPosition, ParseContext{Id: id, Nodes: nodes, BelowGather: isGather || parseContext.BelowGather})
+				extractPlanNodes(
+					plan.(map[string]interface{}),
+					newPosition,
+					joinViewPosition,
+					ParseContext{Id: id, Nodes: nodes, BelowGather: isGather || parseContext.BelowGather, ParentNestedLoop: nodeType == "Nested Loop"},
+				)
 			}
 		}
 	}

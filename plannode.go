@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
@@ -10,25 +11,28 @@ import (
 )
 
 type PlanNode struct {
-	NodeType          string
-	Plans             []PlanNode
-	PlanRows          int
-	ActualRows        int
-	PartialMode       string
-	Position          position
-	JoinViewPosition  position
-	RelationName      string
-	SharedBuffersRead int
-	SharedBuffersHit  int
-	IsGather          bool
-	Workers           int
-	StartupCost       float64
-	TotalCost         float64
-	StartupTime       float64
-	TotalTime         float64
-	IndexName         string
-	IndexCond         string
-	Filter            string
+	NodeType           string
+	Plans              []PlanNode
+	PlanRows           int
+	ActualRows         int
+	PartialMode        string
+	Position           position
+	JoinViewPosition   position
+	RelationName       string
+	SharedBuffersRead  int
+	SharedBuffersHit   int
+	IsGather           bool
+	Workers            int
+	StartupCost        float64
+	TotalCost          float64
+	StartupTime        float64
+	TotalTime          float64
+	IndexName          string
+	IndexCond          string
+	Filter             string
+	ParentRelationship string
+	ParentIsNestedLoop bool
+	ActualLoops        int
 }
 
 func (node PlanNode) View(i int, ctx ProgramContext) string {
@@ -174,6 +178,9 @@ func (node PlanNode) times(styles Styles, space int) string {
 		buf.WriteString(styles.Value.Render(totalTime))
 		buf.WriteString(styles.Bracket.Render("]"))
 	} else {
+		if node.ParentIsNestedLoop && node.ParentRelationship == "Inner" {
+			totalTime = fmt.Sprintf("(%s)→%s", formatUnderscores(node.ActualLoops), totalTime)
+		}
 		columns := fmt.Sprintf("%15s%15s", startupTime, totalTime)
 		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
 	}
@@ -201,6 +208,12 @@ func (node PlanNode) rows(styles Styles, space int) string {
 		buf.WriteString(rowStatus)
 		buf.WriteString(styles.Bracket.Render("]"))
 	} else {
+
+		if node.ParentIsNestedLoop && node.ParentRelationship == "Inner" {
+			separatedActualRows = fmt.Sprintf("(%s) → %s", formatUnderscores(node.ActualLoops), separatedActualRows)
+		} else if node.ActualLoops > 1 {
+			separatedActualRows = fmt.Sprintf("%s(%s)", separatedActualRows, formatUnderscores(node.ActualLoops))
+		}
 		columns := fmt.Sprintf("%15s%15s", separatedPlanRows, separatedActualRows)
 		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
 	}
@@ -235,9 +248,13 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 		buf.WriteString(ctx.NormalStyle.NodeName.Render(node.abbrevName()))
 		buf.WriteString(" - ")
 	}
+
 	buf.WriteString(ctx.NormalStyle.NodeName.Render(node.name()))
 	buf.WriteString("\n")
 	buf.WriteString(strings.Repeat("-", ctx.Width))
+	buf.WriteString("\n")
+	buf.WriteString(ctx.DetailStyles.Label.Render("Actual Loops: "))
+	buf.WriteString(ctx.NormalStyle.Everything.Render(strconv.Itoa(node.ActualLoops)))
 	buf.WriteString("\n")
 	if node.RelationName != "" {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Relation Name: "))

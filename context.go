@@ -6,10 +6,10 @@ type StatView int
 
 const (
 	DisplayNothing StatView = iota
+	DisplayTime
 	DisplayRows
 	DisplayBuffers
 	DisplayCost
-	DisplayTime
 )
 
 func (s StatView) String() string {
