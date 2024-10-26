@@ -91,7 +91,7 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 	needed := ctx.Width - ansi.StringWidth(result)
 
 	if ctx.StatDisplay == DisplayRows {
-		buf.WriteString(node.rows(styles, needed))
+		buf.WriteString(node.rows(styles, needed, ctx))
 	} else if ctx.StatDisplay == DisplayBuffers {
 		buf.WriteString(node.buffers(styles, needed))
 	} else if ctx.StatDisplay == DisplayCost {
@@ -196,7 +196,7 @@ func (node PlanNode) times(styles Styles, space int) string {
 	return buf.String()
 }
 
-func (node PlanNode) rows(styles Styles, space int) string {
+func (node PlanNode) rows(styles Styles, space int, ctx ProgramContext) string {
 
 	separatedPlanRows := formatUnderscores(node.PlanRows)
 	separatedActualRows := formatUnderscores(node.Analyzed.ActualRows)
@@ -217,11 +217,16 @@ func (node PlanNode) rows(styles Styles, space int) string {
 		buf.WriteString(styles.Bracket.Render("]"))
 	} else {
 
-		if node.ParentIsNestedLoop && node.ParentRelationship == "Inner" {
-			separatedActualRows = fmt.Sprintf("(%s) → %s", formatUnderscores(node.Analyzed.ActualLoops), separatedActualRows)
-		} else if node.Analyzed.ActualLoops > 1 {
-			separatedActualRows = fmt.Sprintf("%s(%s)", separatedActualRows, formatUnderscores(node.Analyzed.ActualLoops))
+		if ctx.Analyzed {
+			if node.ParentIsNestedLoop && node.ParentRelationship == "Inner" {
+				separatedActualRows = fmt.Sprintf("(%s) → %s", formatUnderscores(node.Analyzed.ActualLoops), separatedActualRows)
+			} else if node.Analyzed.ActualLoops > 1 {
+				separatedActualRows = fmt.Sprintf("%s(%s)", separatedActualRows, formatUnderscores(node.Analyzed.ActualLoops))
+			}
+		} else {
+			separatedActualRows = "- "
 		}
+
 		columns := fmt.Sprintf("%15s%15s", separatedPlanRows, separatedActualRows)
 		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
 	}
@@ -271,9 +276,11 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 		buf.WriteString(ctx.DetailStyles.Warning.Render(strconv.Itoa(node.Analyzed.TempWriteBlocks)))
 		buf.WriteString("\n")
 	}
-	buf.WriteString(ctx.DetailStyles.Label.Render("Actual Loops: "))
-	buf.WriteString(ctx.NormalStyle.Everything.Render(strconv.Itoa(node.Analyzed.ActualLoops)))
-	buf.WriteString("\n")
+	if ctx.Analyzed {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Actual Loops: "))
+		buf.WriteString(ctx.NormalStyle.Everything.Render(strconv.Itoa(node.Analyzed.ActualLoops)))
+		buf.WriteString("\n")
+	}
 	if node.RelationName != "" {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Relation Name: "))
 		buf.WriteString(ctx.NormalStyle.Relation.Render(node.RelationName))
