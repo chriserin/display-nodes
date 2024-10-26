@@ -8,18 +8,18 @@ import (
 )
 
 func main() {
-	decoded, executionTime := decodeJson(os.Stdin)
+	decoded, executionTime, analyzed := decodeJson(os.Stdin)
 	nodes := make([]PlanNode, 0, 1)
 	id := 0
 	extractPlanNodes(decoded,
 		position{Id: 0, Level: 0, Parent: 0},
 		position{Id: 0, Level: 0, Parent: 0},
-		ParseContext{Id: &id, Nodes: &nodes},
+		ParseContext{Id: &id, Nodes: &nodes, Analyzed: analyzed},
 	)
 	runProgram(nodes, executionTime, InitProgramContext(nodes[0]))
 }
 
-func decodeJson(data *os.File) (map[string]interface{}, float64) {
+func decodeJson(data *os.File) (map[string]interface{}, float64, bool) {
 	var decoded any
 
 	err := json.NewDecoder(os.Stdin).Decode(&decoded)
@@ -30,9 +30,9 @@ func decodeJson(data *os.File) (map[string]interface{}, float64) {
 
 	planObject := decoded.([]interface{})[0].(map[string]interface{})
 	plan := planObject["Plan"].(map[string]interface{})
-	executionTime := planObject["Execution Time"].(float64)
+	executionTime, analyzed := planObject["Execution Time"].(float64)
 
-	return plan, executionTime
+	return plan, executionTime, analyzed
 }
 
 type position struct {
@@ -48,14 +48,14 @@ type ParseContext struct {
 	Nodes            *[]PlanNode
 	BelowGather      bool
 	ParentNestedLoop bool
+	Analyzed         bool
 }
 
 func extractPlanNodes(plan map[string]interface{}, parentPosition position, parentJoinPosition position, parseContext ParseContext) PlanNode {
 	nodeType := plan["Node Type"].(string)
 	planRows := plan["Plan Rows"].(float64)
-	actualRows := plan["Actual Rows"].(float64)
-	partialMode, ok := plan["Partial Mode"].(string)
 
+	partialMode, ok := plan["Partial Mode"].(string)
 	if !ok {
 		partialMode = ""
 	}
@@ -90,14 +90,9 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 		parentRelationship = ""
 	}
 
-	sharedReadBlocks := plan["Shared Read Blocks"].(float64)
-	sharedHitBlocks := plan["Shared Hit Blocks"].(float64)
 	startupCost := plan["Startup Cost"].(float64)
 	totalCost := plan["Total Cost"].(float64)
-	startupTime := plan["Actual Startup Time"].(float64)
-	totalTime := plan["Actual Total Time"].(float64)
-
-	workersLaunched, ok := plan["Workers Launched"].(float64)
+	workersPlanned, ok := plan["Workers Planned"].(float64)
 
 	plans := plan["Plans"]
 
@@ -106,11 +101,11 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 
 	isGather := strings.Contains(nodeType, "Gather")
 
-	var workers int
+	var workersPlannedInt int
 	if isGather {
-		workers = int(workersLaunched) + 1
+		workersPlannedInt = int(workersPlanned) + 1
 	} else {
-		workers = 0
+		workersPlannedInt = 0
 	}
 
 	newPosition := position{
@@ -138,27 +133,50 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 	extractedNode := PlanNode{
 		NodeType:           nodeType,
 		PlanRows:           int(planRows),
-		ActualRows:         int(actualRows),
 		PartialMode:        partialMode,
 		Position:           newPosition,
 		JoinViewPosition:   joinViewPosition,
 		RelationName:       relationName,
-		SharedBuffersHit:   int(sharedHitBlocks),
-		SharedBuffersRead:  int(sharedReadBlocks),
 		IsGather:           isGather,
-		Workers:            workers,
 		StartupCost:        startupCost,
 		TotalCost:          totalCost,
-		StartupTime:        startupTime,
-		TotalTime:          totalTime,
+		PlannedWorkers:     workersPlannedInt,
 		IndexName:          indexName,
 		IndexCond:          indexCond,
 		Filter:             filter,
 		ParentRelationship: parentRelationship,
 		ParentIsNestedLoop: parseContext.ParentNestedLoop,
-		ActualLoops:        int(actualLoops),
-		TempReadBlocks:     int(tempReadBlocks),
-		TempWriteBlocks:    int(tempWriteBlocks),
+	}
+
+	if parseContext.Analyzed {
+
+		actualRows := plan["Actual Rows"].(float64)
+		sharedReadBlocks := plan["Shared Read Blocks"].(float64)
+		sharedHitBlocks := plan["Shared Hit Blocks"].(float64)
+		startupTime := plan["Actual Startup Time"].(float64)
+		totalTime := plan["Actual Total Time"].(float64)
+		workersLaunched := plan["Workers Launched"].(float64)
+
+		var workersLaunchedInt int
+		if isGather {
+			workersLaunchedInt = int(workersLaunched) + 1
+		} else {
+			workersLaunchedInt = 0
+		}
+
+		analyzed := Analyzed{
+			LaunchedWorkers:   workersLaunchedInt,
+			SharedBuffersHit:  int(sharedHitBlocks),
+			SharedBuffersRead: int(sharedReadBlocks),
+			StartupTime:       startupTime,
+			TotalTime:         totalTime,
+			ActualLoops:       int(actualLoops),
+			TempReadBlocks:    int(tempReadBlocks),
+			TempWriteBlocks:   int(tempWriteBlocks),
+			ActualRows:        int(actualRows),
+		}
+
+		extractedNode.Analyzed = analyzed
 	}
 
 	nodes := parseContext.Nodes

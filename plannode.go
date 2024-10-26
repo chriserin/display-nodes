@@ -11,30 +11,36 @@ import (
 )
 
 type PlanNode struct {
+	// Explain Attributes
 	NodeType           string
+	PartialMode        string
 	Plans              []PlanNode
 	PlanRows           int
-	ActualRows         int
-	PartialMode        string
 	Position           position
 	JoinViewPosition   position
 	RelationName       string
-	SharedBuffersRead  int
-	SharedBuffersHit   int
 	IsGather           bool
-	Workers            int
+	PlannedWorkers     int
 	StartupCost        float64
 	TotalCost          float64
-	StartupTime        float64
-	TotalTime          float64
 	IndexName          string
 	IndexCond          string
 	Filter             string
 	ParentRelationship string
 	ParentIsNestedLoop bool
-	ActualLoops        int
-	TempReadBlocks     int
-	TempWriteBlocks    int
+	Analyzed           Analyzed
+}
+
+type Analyzed struct {
+	ActualRows        int
+	SharedBuffersRead int
+	SharedBuffersHit  int
+	LaunchedWorkers   int
+	StartupTime       float64
+	TotalTime         float64
+	ActualLoops       int
+	TempReadBlocks    int
+	TempWriteBlocks   int
 }
 
 func (node PlanNode) View(i int, ctx ProgramContext) string {
@@ -61,8 +67,8 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 	if ctx.DisplayParallel {
 		if viewPosition.BelowGather {
 			buf.WriteString(styles.Gutter.Render("┃┃ "))
-		} else if node.Workers > 0 {
-			buf.WriteString(styles.Workers.Render(fmt.Sprintf("%.2d ", node.Workers)))
+		} else if node.Analyzed.LaunchedWorkers > 0 {
+			buf.WriteString(styles.Workers.Render(fmt.Sprintf("%.2d ", node.Analyzed.LaunchedWorkers)))
 		} else {
 			buf.WriteString("   ")
 		}
@@ -129,8 +135,8 @@ func (node PlanNode) name() string {
 
 func (node PlanNode) buffers(styles Styles, space int) string {
 	var buf strings.Builder
-	totalBuffers := formatUnderscores(node.SharedBuffersRead + node.SharedBuffersHit)
-	readBuffers := formatUnderscores(node.SharedBuffersRead)
+	totalBuffers := formatUnderscores(node.Analyzed.SharedBuffersRead + node.Analyzed.SharedBuffersHit)
+	readBuffers := formatUnderscores(node.Analyzed.SharedBuffersRead)
 
 	if false {
 		buf.WriteString(styles.Bracket.Render(" ["))
@@ -168,8 +174,8 @@ func (node PlanNode) costs(styles Styles, space int) string {
 }
 
 func (node PlanNode) times(styles Styles, space int) string {
-	startupTime := formatUnderscoresFloat(node.StartupTime)
-	totalTime := formatUnderscoresFloat(node.TotalTime)
+	startupTime := formatUnderscoresFloat(node.Analyzed.StartupTime)
+	totalTime := formatUnderscoresFloat(node.Analyzed.TotalTime)
 
 	var buf strings.Builder
 	if false {
@@ -181,7 +187,7 @@ func (node PlanNode) times(styles Styles, space int) string {
 		buf.WriteString(styles.Bracket.Render("]"))
 	} else {
 		if node.ParentIsNestedLoop && node.ParentRelationship == "Inner" {
-			totalTime = fmt.Sprintf("(%s)→%s", formatUnderscores(node.ActualLoops), totalTime)
+			totalTime = fmt.Sprintf("(%s)→%s", formatUnderscores(node.Analyzed.ActualLoops), totalTime)
 		}
 		columns := fmt.Sprintf("%15s%15s", startupTime, totalTime)
 		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
@@ -193,9 +199,9 @@ func (node PlanNode) times(styles Styles, space int) string {
 func (node PlanNode) rows(styles Styles, space int) string {
 
 	separatedPlanRows := formatUnderscores(node.PlanRows)
-	separatedActualRows := formatUnderscores(node.ActualRows)
+	separatedActualRows := formatUnderscores(node.Analyzed.ActualRows)
 
-	percentOfActual := float32(node.PlanRows) / float32(node.ActualRows) * 100
+	percentOfActual := float32(node.PlanRows) / float32(node.Analyzed.ActualRows) * 100
 
 	rowStatus := getRowStatus(percentOfActual, styles)
 
@@ -212,9 +218,9 @@ func (node PlanNode) rows(styles Styles, space int) string {
 	} else {
 
 		if node.ParentIsNestedLoop && node.ParentRelationship == "Inner" {
-			separatedActualRows = fmt.Sprintf("(%s) → %s", formatUnderscores(node.ActualLoops), separatedActualRows)
-		} else if node.ActualLoops > 1 {
-			separatedActualRows = fmt.Sprintf("%s(%s)", separatedActualRows, formatUnderscores(node.ActualLoops))
+			separatedActualRows = fmt.Sprintf("(%s) → %s", formatUnderscores(node.Analyzed.ActualLoops), separatedActualRows)
+		} else if node.Analyzed.ActualLoops > 1 {
+			separatedActualRows = fmt.Sprintf("%s(%s)", separatedActualRows, formatUnderscores(node.Analyzed.ActualLoops))
 		}
 		columns := fmt.Sprintf("%15s%15s", separatedPlanRows, separatedActualRows)
 		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
@@ -255,18 +261,18 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 	buf.WriteString("\n")
 	buf.WriteString(strings.Repeat("-", ctx.Width))
 	buf.WriteString("\n")
-	if node.TempReadBlocks > 0 {
+	if node.Analyzed.TempReadBlocks > 0 {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Temp Read Blocks: "))
-		buf.WriteString(ctx.DetailStyles.Warning.Render(strconv.Itoa(node.TempReadBlocks)))
+		buf.WriteString(ctx.DetailStyles.Warning.Render(strconv.Itoa(node.Analyzed.TempReadBlocks)))
 		buf.WriteString("\n")
 	}
-	if node.TempWriteBlocks > 0 {
+	if node.Analyzed.TempWriteBlocks > 0 {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Temp Write Blocks: "))
-		buf.WriteString(ctx.DetailStyles.Warning.Render(strconv.Itoa(node.TempWriteBlocks)))
+		buf.WriteString(ctx.DetailStyles.Warning.Render(strconv.Itoa(node.Analyzed.TempWriteBlocks)))
 		buf.WriteString("\n")
 	}
 	buf.WriteString(ctx.DetailStyles.Label.Render("Actual Loops: "))
-	buf.WriteString(ctx.NormalStyle.Everything.Render(strconv.Itoa(node.ActualLoops)))
+	buf.WriteString(ctx.NormalStyle.Everything.Render(strconv.Itoa(node.Analyzed.ActualLoops)))
 	buf.WriteString("\n")
 	if node.RelationName != "" {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Relation Name: "))

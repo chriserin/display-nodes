@@ -138,8 +138,8 @@ func runProgram(nodes []PlanNode, executionTime float64, ctx ProgramContext) {
 			DisplayNodes: nodes,
 			StatusLine: StatusLine{
 				ExecutionTime: executionTime,
-				TotalBuffers:  nodes[0].SharedBuffersHit + nodes[0].SharedBuffersRead,
-				TotalRows:     nodes[0].ActualRows,
+				TotalBuffers:  nodes[0].Analyzed.SharedBuffersHit + nodes[0].Analyzed.SharedBuffersRead,
+				TotalRows:     nodes[0].Analyzed.ActualRows,
 			},
 			detailsViewport: vp,
 		})
