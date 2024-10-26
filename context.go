@@ -41,6 +41,7 @@ type ProgramContext struct {
 	DetailStyles     DetailStyles
 	SelectedNode     PlanNode
 	Width            int
+	Analyzed         bool
 }
 
 type Styles struct {
@@ -66,7 +67,7 @@ type DetailStyles struct {
 	Warning lipgloss.Style
 }
 
-func InitProgramContext(selectedNode PlanNode) ProgramContext {
+func InitProgramContext(selectedNode PlanNode, analyzed bool) ProgramContext {
 	normal := NormalStyles()
 
 	return ProgramContext{
@@ -79,6 +80,7 @@ func InitProgramContext(selectedNode PlanNode) ProgramContext {
 		SelectedNode:     selectedNode,
 		StatusStyles:     StatusLineStyles(),
 		DetailStyles:     DetailViewStyles(),
+		Analyzed:         analyzed,
 	}
 }
 

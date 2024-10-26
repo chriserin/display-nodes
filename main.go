@@ -16,7 +16,7 @@ func main() {
 		position{Id: 0, Level: 0, Parent: 0},
 		ParseContext{Id: &id, Nodes: &nodes, Analyzed: analyzed},
 	)
-	runProgram(nodes, executionTime, InitProgramContext(nodes[0]))
+	runProgram(nodes, executionTime, InitProgramContext(nodes[0], analyzed))
 }
 
 func decodeJson(data *os.File) (map[string]interface{}, float64, bool) {
@@ -155,7 +155,7 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 		sharedHitBlocks := plan["Shared Hit Blocks"].(float64)
 		startupTime := plan["Actual Startup Time"].(float64)
 		totalTime := plan["Actual Total Time"].(float64)
-		workersLaunched := plan["Workers Launched"].(float64)
+		workersLaunched, _ := plan["Workers Launched"].(float64)
 
 		var workersLaunchedInt int
 		if isGather {
@@ -190,7 +190,7 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition position, pare
 					plan.(map[string]interface{}),
 					newPosition,
 					joinViewPosition,
-					ParseContext{Id: id, Nodes: nodes, BelowGather: isGather || parseContext.BelowGather, ParentNestedLoop: nodeType == "Nested Loop"},
+					ParseContext{Id: id, Nodes: nodes, BelowGather: isGather || parseContext.BelowGather, ParentNestedLoop: nodeType == "Nested Loop", Analyzed: parseContext.Analyzed},
 				)
 			}
 		}

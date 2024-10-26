@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -208,13 +209,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.StatDisplay = DisplayTime
 			}
 		case key.Matches(msg, m.keys.NextStatDisplay):
-			m.ctx.StatDisplay = (m.ctx.StatDisplay + 1) % 5
+			m.ctx.StatDisplay = nextStatDisplay(m.ctx)
 		case key.Matches(msg, m.keys.PrevStatDisplay):
-			if m.ctx.StatDisplay == 0 {
-				m.ctx.StatDisplay = 4
-			} else {
-				m.ctx.StatDisplay = (m.ctx.StatDisplay - 1) % 5
-			}
+			m.ctx.StatDisplay = prevStatDisplay(m.ctx)
 		case key.Matches(msg, m.keys.ToggleParallel):
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
 		default:
@@ -226,6 +223,40 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func prevStatDisplay(ctx ProgramContext) StatView {
+	newStatDisplay := ctx.StatDisplay
+
+	for true {
+		if newStatDisplay == 0 {
+			newStatDisplay = DisplayCost
+		} else {
+			newStatDisplay = (newStatDisplay - 1) % 5
+		}
+
+		if ctx.Analyzed {
+			break
+		} else if slices.Contains([]StatView{DisplayRows, DisplayCost, DisplayNothing}, newStatDisplay) {
+			break
+		}
+	}
+	return newStatDisplay
+}
+
+func nextStatDisplay(ctx ProgramContext) StatView {
+	newStatDisplay := ctx.StatDisplay
+
+	for true {
+		newStatDisplay = (newStatDisplay + 1) % 5
+
+		if ctx.Analyzed {
+			break
+		} else if slices.Contains([]StatView{DisplayRows, DisplayCost, DisplayNothing}, newStatDisplay) {
+			break
+		}
+	}
+	return newStatDisplay
 }
 
 func displayedNodes(nodes []PlanNode, ctx ProgramContext) []PlanNode {
