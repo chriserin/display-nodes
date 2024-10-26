@@ -16,5 +16,8 @@ Display Nodes is a tool that enhances the readability of postgres query plans.
 - [x] display parallelism
 - [x] Cycle through stats displays
 - [x] display node type with relation name
-- [ ] Surface temporary reads/writes
+- [x] Surface temporary reads/writes
 - [x] Surface loop counts
+- [ ] Read/Display explain without analyze
+- [ ] Use connection to run sql file
+- [ ] Store SQL file and json together
