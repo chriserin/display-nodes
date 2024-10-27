@@ -29,6 +29,7 @@ type PlanNode struct {
 	ParentRelationship string
 	ParentIsNestedLoop bool
 	Analyzed           Analyzed
+	PlanWidth          int
 }
 
 type Analyzed struct {
@@ -299,6 +300,11 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 	if node.Filter != "" {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Filter: "))
 		buf.WriteString(ctx.NormalStyle.Everything.Render(node.Filter))
+		buf.WriteString("\n")
+	}
+	if node.PlanWidth > 0 {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Plan Width: "))
+		buf.WriteString(ctx.NormalStyle.Everything.Render(strconv.Itoa(node.PlanWidth)))
 		buf.WriteString("\n")
 	}
 
