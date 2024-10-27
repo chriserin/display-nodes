@@ -34,13 +34,12 @@ func (s StatusLine) View(ctx ProgramContext) string {
 	buf.WriteString(styles.Normal.Render(""))
 	buf.WriteString(styles.Normal.Render(" Rows:"))
 	buf.WriteString(styles.Value.Render(" %s "))
-	buf.WriteString(styles.AltNormal.Render("      %s"))
+	buf.WriteString(styles.AltNormal.Render(" "))
 
 	result := fmt.Sprintf(buf.String(),
 		s.ExecutionTime,
 		formatUnderscores(s.TotalBuffers),
 		formatUnderscores(s.TotalRows),
-		ctx.StatDisplay.String(),
 	)
 
 	var finalBuf strings.Builder
@@ -48,9 +47,8 @@ func (s StatusLine) View(ctx ProgramContext) string {
 	finalBuf.WriteString(result)
 
 	needed := ctx.Width - ansi.StringWidth(result)
-	space := styles.AltNormal.Render(strings.Repeat(" ", needed))
 
-	finalBuf.WriteString(space)
+	finalBuf.WriteString(fmt.Sprintf("%*s%*s", needed-10, ctx.StatDisplay.String(), 10, ""))
 	finalBuf.WriteString("\n")
 
 	return finalBuf.String()

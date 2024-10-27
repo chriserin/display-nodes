@@ -21,3 +21,4 @@ Display Nodes is a tool that enhances the readability of postgres query plans.
 - [ ] Read/Display explain without analyze
 - [ ] Use connection to run sql file
 - [ ] Store SQL file and json together
+- [ ] Anchor stat indicator to the right
