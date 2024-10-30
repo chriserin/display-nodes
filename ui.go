@@ -122,7 +122,7 @@ type Model struct {
 	detailsViewport viewport.Model
 }
 
-func runProgram(explainPlan ExplainPlan) {
+func RunProgram(explainPlan ExplainPlan) {
 	ctx := InitProgramContext(explainPlan.nodes[0], explainPlan.analyzed)
 
 	vp := viewport.New(80, 10)
