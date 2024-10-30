@@ -122,7 +122,8 @@ type Model struct {
 	detailsViewport viewport.Model
 }
 
-func runProgram(nodes []PlanNode, executionTime float64, ctx ProgramContext) {
+func runProgram(explainPlan ExplainPlan) {
+	ctx := InitProgramContext(explainPlan.nodes[0], explainPlan.analyzed)
 
 	vp := viewport.New(80, 10)
 	vp.Style = lipgloss.NewStyle().
@@ -132,15 +133,15 @@ func runProgram(nodes []PlanNode, executionTime float64, ctx ProgramContext) {
 
 	program := tea.NewProgram(
 		Model{
-			nodes:        nodes,
+			nodes:        explainPlan.nodes,
 			ctx:          ctx,
 			keys:         keys,
 			help:         help.New(),
-			DisplayNodes: nodes,
+			DisplayNodes: explainPlan.nodes,
 			StatusLine: StatusLine{
-				ExecutionTime: executionTime,
-				TotalBuffers:  nodes[0].Analyzed.SharedBuffersHit + nodes[0].Analyzed.SharedBuffersRead,
-				TotalRows:     nodes[0].Analyzed.ActualRows,
+				ExecutionTime: explainPlan.executionTime,
+				TotalBuffers:  explainPlan.TotalBuffers(),
+				TotalRows:     explainPlan.TotalRows(),
 			},
 			detailsViewport: vp,
 		})

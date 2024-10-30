@@ -6,9 +6,15 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
 )
+
+type Position struct {
+	Id          int
+	Level       int
+	Parent      int
+	Display     bool
+	BelowGather bool
+}
 
 type PlanNode struct {
 	// Explain Attributes
@@ -16,8 +22,8 @@ type PlanNode struct {
 	PartialMode        string
 	Plans              []PlanNode
 	PlanRows           int
-	Position           position
-	JoinViewPosition   position
+	Position           Position
+	JoinViewPosition   Position
 	RelationName       string
 	IsGather           bool
 	PlannedWorkers     int
@@ -46,7 +52,7 @@ type Analyzed struct {
 
 func (node PlanNode) View(i int, ctx ProgramContext) string {
 
-	var viewPosition position
+	var viewPosition Position
 	if ctx.JoinView {
 		viewPosition = node.JoinViewPosition
 	} else {
@@ -243,16 +249,6 @@ func getRowStatus(percentOfActual float32, styles Styles) string {
 	} else {
 		return styles.Everything.Render(fmt.Sprintf(" %.1f%%", percentOfActual))
 	}
-}
-
-var printer *message.Printer = message.NewPrinter(language.English)
-
-func formatUnderscores(value int) string {
-	return strings.Replace(printer.Sprintf("%d", value), ",", "_", -1)
-}
-
-func formatUnderscoresFloat(value float64) string {
-	return strings.Replace(printer.Sprintf("%.2f", value), ",", "_", -1)
 }
 
 func (node PlanNode) Content(ctx ProgramContext) string {

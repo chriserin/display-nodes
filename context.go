@@ -1,6 +1,8 @@
 package main
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+)
 
 type StatView int
 
@@ -17,6 +19,7 @@ func (s StatView) String() string {
 	case DisplayNothing:
 		return ""
 	case DisplayRows:
+
 		return "Rows"
 	case DisplayBuffers:
 		return "Buffers"
