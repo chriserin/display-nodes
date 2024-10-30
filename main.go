@@ -23,6 +23,15 @@ func main() {
 				RunProgram(explainPlan)
 				return
 			}
+
+			if filename != "" {
+				queryRun := NewQueryRun(filename)
+				queryWithExplain := queryRun.WithExplainAnalyze()
+				result := executeExplain(queryWithExplain)
+				queryRun.SetResult(result)
+				explainPlan := Convert(result)
+				RunProgram(explainPlan)
+			}
 		},
 	}
 
@@ -31,4 +40,15 @@ func main() {
 		StringVarP(&filename, "filename", "f", "", "filename of sql file")
 
 	rootCmd.Execute()
+}
+
+var databaseUrl = "postgres://postgres:postgres@localhost:5432/galaxy_dev"
+
+func executeExplain(query string) string {
+	pgConn := Connection{
+		databaseUrl: databaseUrl,
+	}
+	pgConn.Connect()
+	defer pgConn.Close()
+	return pgConn.ExecuteExplain(query)
 }
