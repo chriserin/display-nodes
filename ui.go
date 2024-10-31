@@ -120,9 +120,22 @@ type Model struct {
 	DisplayNodes    []PlanNode
 	StatusLine      StatusLine
 	detailsViewport viewport.Model
+	source          Source
 }
 
-func RunProgram(explainPlan ExplainPlan) {
+type Source struct {
+	sourceType SourceType
+	fileName   string
+}
+
+type SourceType int
+
+const (
+	SOURCE_STDIN SourceType = iota
+	SOURCE_FILE
+)
+
+func RunProgram(explainPlan ExplainPlan, source Source) {
 	ctx := InitProgramContext(explainPlan.nodes[0], explainPlan.analyzed)
 
 	vp := viewport.New(80, 10)
@@ -144,6 +157,7 @@ func RunProgram(explainPlan ExplainPlan) {
 				TotalRows:     explainPlan.TotalRows(),
 			},
 			detailsViewport: vp,
+			source:          source,
 		})
 
 	if _, err := program.Run(); err != nil {
@@ -280,7 +294,7 @@ func (m Model) View() string {
 	var buf strings.Builder
 
 	buf.WriteString(m.StatusLine.View(m.ctx))
-	buf.WriteString(HeadersView(m.ctx))
+	buf.WriteString(HeadersView(m.ctx, m.source))
 
 	for i, node := range m.DisplayNodes {
 		buf.WriteString(node.View(i, m.ctx))
@@ -297,7 +311,15 @@ func (m Model) View() string {
 	return buf.String()
 }
 
-func HeadersView(ctx ProgramContext) string {
+func HeadersView(ctx ProgramContext, source Source) string {
+	var sourceOutput string
+
+	if source.sourceType == SOURCE_FILE {
+		sourceOutput = fmt.Sprintf("  %s", source.fileName)
+	} else {
+		sourceOutput = "   STDIN"
+	}
+
 	var headers string
 	if ctx.StatDisplay == DisplayTime {
 		headers = fmt.Sprintf("%15s%15s ", "Startup", "Total")
@@ -310,5 +332,6 @@ func HeadersView(ctx ProgramContext) string {
 	} else if ctx.StatDisplay == DisplayNothing {
 		headers = ""
 	}
-	return fmt.Sprintf("%*s\n", ctx.Width, headers)
+	needed := ctx.Width - len(sourceOutput)
+	return fmt.Sprintf("%s%*s\n", sourceOutput, needed, headers)
 }
