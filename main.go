@@ -33,7 +33,7 @@ func main() {
 				pgexDir := CreatePgexDir()
 				queryRun.WritePgexFile(pgexDir)
 				explainPlan := Convert(result)
-				RunProgram(explainPlan, Source{sourceType: SOURCE_FILE, fileName: queryRun.pgexFilename()})
+				RunProgram(explainPlan, Source{sourceType: SOURCE_FILE, fileName: queryRun.DisplayName()})
 			}
 		},
 	}

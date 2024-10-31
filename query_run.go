@@ -48,10 +48,16 @@ func (q *QueryRun) SetResult(result string) {
 }
 
 func (q QueryRun) WritePgexFile(pgexDir string) {
-	fullFilePath := filepath.Join(pgexDir, q.pgexFilename())
+	fileName := q.pgexFilename()
+	fullFilePath := filepath.Join(pgexDir, fileName)
 	contentBytes := []byte(q.pgexFileContent())
 
 	os.WriteFile(fullFilePath, contentBytes, 0666)
+}
+
+func (q QueryRun) DisplayName() string {
+	_, file := path.Split(q.originalFilename)
+	return file
 }
 
 func (q QueryRun) pgexFilename() string {

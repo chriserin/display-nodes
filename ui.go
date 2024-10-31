@@ -315,7 +315,7 @@ func HeadersView(ctx ProgramContext, source Source) string {
 	var sourceOutput string
 
 	if source.sourceType == SOURCE_FILE {
-		sourceOutput = fmt.Sprintf("  %s", source.fileName)
+		sourceOutput = fmt.Sprintf("   %s", source.fileName)
 	} else {
 		sourceOutput = "   STDIN"
 	}
