@@ -184,7 +184,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.JoinView = !m.ctx.JoinView
 			m.DisplayNodes = displayedNodes(m.nodes, m.ctx)
 			m.ctx.Cursor = 0
-			m.ctx.SelectedNode = m.DisplayNodes[m.ctx.Cursor]
+			if len(m.DisplayNodes) > 0 {
+				m.ctx.SelectedNode = m.DisplayNodes[m.ctx.Cursor]
+			} else {
+				m.ctx.SelectedNode = PlanNode{}
+			}
 		case key.Matches(msg, m.keys.ToggleRows):
 			if m.ctx.StatDisplay == DisplayRows {
 				m.ctx.StatDisplay = DisplayNothing
