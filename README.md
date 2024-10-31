@@ -19,7 +19,9 @@ Display Nodes is a tool that enhances the readability of postgres query plans.
 - [x] Surface temporary reads/writes
 - [x] Surface loop counts
 - [x] Read/Display explain without analyze
-- [ ] Use connection to run sql file
-- [ ] Store SQL file and json together
+- [x] Use connection to run sql file
+- [x] Store SQL file and json together
 - [x] Anchor stat indicator to the right
 - [x] Plan Width
+- [x] Cobra command POC
+- [x] Save file format

@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -27,8 +28,10 @@ func main() {
 			if filename != "" {
 				queryRun := NewQueryRun(filename)
 				queryWithExplain := queryRun.WithExplainAnalyze()
-				result := executeExplain(queryWithExplain)
+				result := ExecuteExplain(queryWithExplain)
 				queryRun.SetResult(result)
+				pgexDir := CreatePgexDir()
+				queryRun.WritePgexFile(pgexDir)
 				explainPlan := Convert(result)
 				RunProgram(explainPlan)
 			}
@@ -44,11 +47,18 @@ func main() {
 
 var databaseUrl = "postgres://postgres:postgres@localhost:5432/galaxy_dev"
 
-func executeExplain(query string) string {
+func ExecuteExplain(query string) string {
 	pgConn := Connection{
 		databaseUrl: databaseUrl,
 	}
 	pgConn.Connect()
 	defer pgConn.Close()
 	return pgConn.ExecuteExplain(query)
+}
+
+func CreatePgexDir() string {
+	workingDir, _ := os.Getwd()
+	dirPath := filepath.Join(workingDir, "_pgex")
+	os.MkdirAll(dirPath, 0755)
+	return dirPath
 }

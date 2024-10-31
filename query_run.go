@@ -2,12 +2,14 @@ package main
 
 import (
 	"example/display-nodes/sqlsplit"
+	"fmt"
 	"log"
 	"os"
 	"os/user"
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 var extension string = ".pgex"
@@ -59,7 +61,8 @@ func (q QueryRun) pgexFilename() string {
 	_, file := path.Split(filePath)
 	name := strings.Split(file, ".")[0]
 
-	return name + extension
+	formattedNow := time.Now().Format("20060102150405")
+	return fmt.Sprintf("%s_%s%s", name, formattedNow, extension)
 }
 
 func (q QueryRun) pgexFileContent() string {
