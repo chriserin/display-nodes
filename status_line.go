@@ -13,6 +13,14 @@ type StatusLine struct {
 	TotalRows     int
 }
 
+func NewStatusLine(explainPlan ExplainPlan) StatusLine {
+	return StatusLine{
+		ExecutionTime: explainPlan.executionTime,
+		TotalBuffers:  explainPlan.TotalBuffers(),
+		TotalRows:     explainPlan.TotalRows(),
+	}
+}
+
 func (s StatusLine) View(ctx ProgramContext) string {
 	styles := ctx.StatusStyles
 

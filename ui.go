@@ -32,6 +32,7 @@ type keyMap struct {
 	NextStatDisplay key.Binding
 	PrevStatDisplay key.Binding
 	ToggleParallel  key.Binding
+	ReExecute       key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
@@ -110,6 +111,10 @@ var keys = keyMap{
 		key.WithKeys("P"),
 		key.WithHelp("P", "Toggle Parallel"),
 	),
+	ReExecute: key.NewBinding(
+		key.WithKeys("X"),
+		key.WithHelp("X", "ReExecute Query"),
+	),
 }
 
 type Model struct {
@@ -121,6 +126,36 @@ type Model struct {
 	StatusLine      StatusLine
 	detailsViewport viewport.Model
 	source          Source
+	queryRun        QueryRun
+}
+
+func InitModel(explainPlan ExplainPlan, source Source, queryRun QueryRun) Model {
+	return Model{
+		nodes:           explainPlan.nodes,
+		ctx:             InitProgramContext(explainPlan.nodes[0], explainPlan.analyzed),
+		keys:            keys,
+		help:            help.New(),
+		DisplayNodes:    explainPlan.nodes,
+		StatusLine:      NewStatusLine(explainPlan),
+		detailsViewport: NewViewPort(),
+		source:          source,
+		queryRun:        queryRun,
+	}
+}
+
+func (m *Model) UpdateModel(explainPlan ExplainPlan) {
+	m.nodes = explainPlan.nodes
+	m.DisplayNodes = explainPlan.nodes
+	m.StatusLine = NewStatusLine(explainPlan)
+}
+
+func NewViewPort() viewport.Model {
+	vp := viewport.New(80, 10)
+	vp.Style = lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		PaddingRight(2).PaddingLeft(2)
+	return vp
 }
 
 type Source struct {
@@ -135,30 +170,10 @@ const (
 	SOURCE_FILE
 )
 
-func RunProgram(explainPlan ExplainPlan, source Source) {
-	ctx := InitProgramContext(explainPlan.nodes[0], explainPlan.analyzed)
-
-	vp := viewport.New(80, 10)
-	vp.Style = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("62")).
-		PaddingRight(2).PaddingLeft(2)
-
+func RunProgram(explainPlan ExplainPlan, source Source, queryRun QueryRun) {
 	program := tea.NewProgram(
-		Model{
-			nodes:        explainPlan.nodes,
-			ctx:          ctx,
-			keys:         keys,
-			help:         help.New(),
-			DisplayNodes: explainPlan.nodes,
-			StatusLine: StatusLine{
-				ExecutionTime: explainPlan.executionTime,
-				TotalBuffers:  explainPlan.TotalBuffers(),
-				TotalRows:     explainPlan.TotalRows(),
-			},
-			detailsViewport: vp,
-			source:          source,
-		})
+		InitModel(explainPlan, source, queryRun),
+	)
 
 	if _, err := program.Run(); err != nil {
 		fmt.Println("Error running program:", err)
@@ -233,6 +248,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.StatDisplay = prevStatDisplay(m.ctx)
 		case key.Matches(msg, m.keys.ToggleParallel):
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
+		case key.Matches(msg, m.keys.ReExecute):
+			queryWithExplain := m.queryRun.WithExplainAnalyze()
+			result := ExecuteExplain(queryWithExplain)
+			m.queryRun.SetResult(result)
+			pgexDir := CreatePgexDir()
+			m.queryRun.WritePgexFile(pgexDir)
+			explainPlan := Convert(result)
+			m.UpdateModel(explainPlan)
 		default:
 			return m, tea.Println(msg)
 		}

@@ -21,7 +21,7 @@ func main() {
 			if (stat.Mode() & os.ModeCharDevice) == 0 {
 				input, _ := io.ReadAll(os.Stdin)
 				explainPlan := Convert(string(input))
-				RunProgram(explainPlan, Source{sourceType: SOURCE_STDIN})
+				RunProgram(explainPlan, Source{sourceType: SOURCE_STDIN}, QueryRun{})
 				return
 			}
 
@@ -33,7 +33,8 @@ func main() {
 				pgexDir := CreatePgexDir()
 				queryRun.WritePgexFile(pgexDir)
 				explainPlan := Convert(result)
-				RunProgram(explainPlan, Source{sourceType: SOURCE_FILE, fileName: queryRun.DisplayName()})
+				source := Source{sourceType: SOURCE_FILE, fileName: queryRun.DisplayName()}
+				RunProgram(explainPlan, source, queryRun)
 			}
 		},
 	}

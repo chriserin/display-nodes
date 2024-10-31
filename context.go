@@ -87,6 +87,12 @@ func InitProgramContext(selectedNode PlanNode, analyzed bool) ProgramContext {
 	}
 }
 
+func (ctx *ProgramContext) ResetContext(explainPlan ExplainPlan) {
+	ctx.Cursor = 0
+	ctx.SelectedNode = explainPlan.nodes[0]
+	ctx.Analyzed = explainPlan.analyzed
+}
+
 func StatusLineStyles() StatusStyles {
 
 	color_a := lipgloss.Color("#9999bb")
