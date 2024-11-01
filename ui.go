@@ -11,6 +11,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 )
 
@@ -127,6 +128,9 @@ type Model struct {
 	detailsViewport viewport.Model
 	source          Source
 	queryRun        QueryRun
+	spinner         spinner.Model
+	sqlChannel      chan QueryRun
+	loading         bool
 }
 
 func InitModel(explainPlan ExplainPlan, source Source, queryRun QueryRun) Model {
@@ -140,7 +144,15 @@ func InitModel(explainPlan ExplainPlan, source Source, queryRun QueryRun) Model 
 		detailsViewport: NewViewPort(),
 		source:          source,
 		queryRun:        queryRun,
+		spinner:         initialSpinner(),
 	}
+}
+
+func initialSpinner() spinner.Model {
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	return s
 }
 
 func (m *Model) UpdateModel(explainPlan ExplainPlan) {
@@ -186,6 +198,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -249,18 +262,35 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.ToggleParallel):
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
 		case key.Matches(msg, m.keys.ReExecute):
-			m.queryRun = NewQueryRun(m.queryRun.originalFilename)
-			queryWithExplain := m.queryRun.WithExplainAnalyze()
-			result := ExecuteExplain(queryWithExplain)
-			m.queryRun.SetResult(result)
-			pgexDir := CreatePgexDir()
-			m.queryRun.WritePgexFile(pgexDir)
-			explainPlan := Convert(result)
-			m.UpdateModel(explainPlan)
+			m.sqlChannel = make(chan QueryRun)
+			m.loading = true
+			go func() {
+				queryRun := NewQueryRun(m.queryRun.originalFilename)
+				queryWithExplain := queryRun.WithExplainAnalyze()
+				result := ExecuteExplain(queryWithExplain)
+				queryRun.SetResult(result)
+				pgexDir := CreatePgexDir()
+				queryRun.WritePgexFile(pgexDir)
+				m.sqlChannel <- queryRun
+			}()
+			return m, m.spinner.Tick
 		default:
 			return m, tea.Println(msg)
 		}
 
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		select {
+		case queryRun := <-m.sqlChannel:
+			m.queryRun = queryRun
+			explainPlan := Convert(queryRun.result)
+			m.UpdateModel(explainPlan)
+			m.loading = false
+			close(m.sqlChannel)
+		default:
+			m.spinner, cmd = m.spinner.Update(msg)
+			return m, cmd
+		}
 	case tea.WindowSizeMsg:
 		m.ctx.Width = msg.Width
 	}
@@ -318,6 +348,9 @@ func (m Model) View() string {
 	var buf strings.Builder
 
 	buf.WriteString(m.StatusLine.View(m.ctx))
+	if m.loading {
+		buf.WriteString(m.spinner.View())
+	}
 	buf.WriteString(HeadersView(m.ctx, m.source))
 
 	for i, node := range m.DisplayNodes {
