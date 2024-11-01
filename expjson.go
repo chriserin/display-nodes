@@ -29,7 +29,6 @@ type ParseContext struct {
 }
 
 func Convert(explainJson string) ExplainPlan {
-
 	decoded, executionTime, analyzed := decodeJson(explainJson)
 	nodes := make([]PlanNode, 0, 1)
 	id := 0

@@ -20,21 +20,14 @@ func main() {
 			stat, _ := os.Stdin.Stat()
 			if (stat.Mode() & os.ModeCharDevice) == 0 {
 				input, _ := io.ReadAll(os.Stdin)
-				explainPlan := Convert(string(input))
-				RunProgram(explainPlan, Source{sourceType: SOURCE_STDIN}, QueryRun{})
+				source := Source{sourceType: SOURCE_STDIN, input: string(input)}
+				RunProgram(source)
 				return
 			}
 
 			if filename != "" {
-				queryRun := NewQueryRun(filename)
-				queryWithExplain := queryRun.WithExplainAnalyze()
-				result := ExecuteExplain(queryWithExplain)
-				queryRun.SetResult(result)
-				pgexDir := CreatePgexDir()
-				queryRun.WritePgexFile(pgexDir)
-				explainPlan := Convert(result)
-				source := Source{sourceType: SOURCE_FILE, fileName: queryRun.DisplayName()}
-				RunProgram(explainPlan, source, queryRun)
+				source := Source{sourceType: SOURCE_FILE, fileName: filename}
+				RunProgram(source)
 			}
 		},
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 	"slices"
 	"strings"
 
@@ -133,17 +134,13 @@ type Model struct {
 	loading         bool
 }
 
-func InitModel(explainPlan ExplainPlan, source Source, queryRun QueryRun) Model {
+func InitModel(source Source) Model {
 	return Model{
-		nodes:           explainPlan.nodes,
-		ctx:             InitProgramContext(explainPlan.nodes[0], explainPlan.analyzed),
+		ctx:             InitProgramContext(),
 		keys:            keys,
 		help:            help.New(),
-		DisplayNodes:    explainPlan.nodes,
-		StatusLine:      NewStatusLine(explainPlan),
 		detailsViewport: NewViewPort(),
 		source:          source,
-		queryRun:        queryRun,
 		spinner:         initialSpinner(),
 	}
 }
@@ -173,6 +170,12 @@ func NewViewPort() viewport.Model {
 type Source struct {
 	sourceType SourceType
 	fileName   string
+	input      string
+}
+
+func (s Source) DisplayName() string {
+	_, file := path.Split(s.fileName)
+	return file
 }
 
 type SourceType int
@@ -182,9 +185,14 @@ const (
 	SOURCE_FILE
 )
 
-func RunProgram(explainPlan ExplainPlan, source Source, queryRun QueryRun) {
+func RunProgram(source Source) {
+	model := InitModel(source)
+	if source.sourceType == SOURCE_STDIN {
+		explainPlan := Convert(source.input)
+		model.UpdateModel(explainPlan)
+	}
 	program := tea.NewProgram(
-		InitModel(explainPlan, source, queryRun),
+		model,
 	)
 
 	if _, err := program.Run(); err != nil {
@@ -193,8 +201,14 @@ func RunProgram(explainPlan ExplainPlan, source Source, queryRun QueryRun) {
 	}
 }
 
+type executeQueryMsg struct{}
+
+func ExecuteQueryCmd() tea.Msg {
+	return executeQueryMsg{}
+}
+
 func (m Model) Init() tea.Cmd {
-	return tea.EnterAltScreen
+	return tea.Batch(tea.EnterAltScreen, ExecuteQueryCmd)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -262,22 +276,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.ToggleParallel):
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
 		case key.Matches(msg, m.keys.ReExecute):
-			m.sqlChannel = make(chan QueryRun)
-			m.loading = true
-			go func() {
-				queryRun := NewQueryRun(m.queryRun.originalFilename)
-				queryWithExplain := queryRun.WithExplainAnalyze()
-				result := ExecuteExplain(queryWithExplain)
-				queryRun.SetResult(result)
-				pgexDir := CreatePgexDir()
-				queryRun.WritePgexFile(pgexDir)
-				m.sqlChannel <- queryRun
-			}()
-			return m, m.spinner.Tick
+			return m, ExecuteQueryCmd
 		default:
 			return m, tea.Println(msg)
 		}
-
+	case executeQueryMsg:
+		m.loading = true
+		m.sqlChannel = make(chan QueryRun)
+		go func() {
+			queryRun := NewQueryRun(m.source.fileName)
+			queryWithExplain := queryRun.WithExplainAnalyze()
+			result := ExecuteExplain(queryWithExplain)
+			queryRun.SetResult(result)
+			pgexDir := CreatePgexDir()
+			queryRun.WritePgexFile(pgexDir)
+			m.sqlChannel <- queryRun
+		}()
+		return m, m.spinner.Tick
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		select {
@@ -285,6 +300,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.queryRun = queryRun
 			explainPlan := Convert(queryRun.result)
 			m.UpdateModel(explainPlan)
+			m.ctx.ResetContext(explainPlan)
 			m.loading = false
 			close(m.sqlChannel)
 		default:
@@ -372,7 +388,7 @@ func HeadersView(ctx ProgramContext, source Source) string {
 	var sourceOutput string
 
 	if source.sourceType == SOURCE_FILE {
-		sourceOutput = fmt.Sprintf("   %s", source.fileName)
+		sourceOutput = fmt.Sprintf("   %s", source.DisplayName())
 	} else {
 		sourceOutput = "   STDIN"
 	}

@@ -70,7 +70,7 @@ type DetailStyles struct {
 	Warning lipgloss.Style
 }
 
-func InitProgramContext(selectedNode PlanNode, analyzed bool) ProgramContext {
+func InitProgramContext() ProgramContext {
 	normal := NormalStyles()
 
 	return ProgramContext{
@@ -80,10 +80,8 @@ func InitProgramContext(selectedNode PlanNode, analyzed bool) ProgramContext {
 		NormalStyle:      normal,
 		CursorStyle:      CursorStyle(normal),
 		ChildCursorStyle: ChildCursorStyle(normal),
-		SelectedNode:     selectedNode,
 		StatusStyles:     StatusLineStyles(),
 		DetailStyles:     DetailViewStyles(),
-		Analyzed:         analyzed,
 	}
 }
 
