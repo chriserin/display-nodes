@@ -249,6 +249,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.ToggleParallel):
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
 		case key.Matches(msg, m.keys.ReExecute):
+			m.queryRun = NewQueryRun(m.queryRun.originalFilename)
 			queryWithExplain := m.queryRun.WithExplainAnalyze()
 			result := ExecuteExplain(queryWithExplain)
 			m.queryRun.SetResult(result)
