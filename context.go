@@ -19,7 +19,6 @@ func (s StatView) String() string {
 	case DisplayNothing:
 		return ""
 	case DisplayRows:
-
 		return "Rows"
 	case DisplayBuffers:
 		return "Buffers"
@@ -82,6 +81,7 @@ func InitProgramContext() ProgramContext {
 		ChildCursorStyle: ChildCursorStyle(normal),
 		StatusStyles:     StatusLineStyles(),
 		DetailStyles:     DetailViewStyles(),
+		StatDisplay:      DisplayRows,
 	}
 }
 
