@@ -199,6 +199,7 @@ func RunProgram(source Source) {
 	if source.sourceType == SOURCE_STDIN {
 		explainPlan := Convert(source.input)
 		model.UpdateModel(explainPlan)
+		model.ctx.ResetContext(explainPlan)
 	}
 	program := tea.NewProgram(
 		model,
