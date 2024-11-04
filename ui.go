@@ -219,11 +219,17 @@ func ExecuteQueryCmd() tea.Msg {
 	return executeQueryMsg{}
 }
 
+type executeExplainQueryMsg struct{}
+
+func ExecuteExplainQueryCmd() tea.Msg {
+	return executeExplainQueryMsg{}
+}
+
 func (m Model) Init() tea.Cmd {
 	if m.source.sourceType == SOURCE_STDIN {
 		return tea.EnterAltScreen
 	} else {
-		return tea.Batch(tea.EnterAltScreen, ExecuteQueryCmd)
+		return tea.Batch(tea.EnterAltScreen, ExecuteExplainQueryCmd)
 	}
 }
 
@@ -296,6 +302,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 			return m, tea.Println(msg)
 		}
+	case executeExplainQueryMsg:
+		m.loading = true
+		m.sqlChannel = make(chan QueryRun)
+		go func() {
+			queryRun := NewQueryRun(m.source.fileName)
+			queryWithExplain := queryRun.WithExplain()
+			result := ExecuteExplain(queryWithExplain)
+			queryRun.SetResult(result)
+			m.sqlChannel <- queryRun
+		}()
+		return m, m.spinner.Tick
 	case executeQueryMsg:
 		m.loading = true
 		m.sqlChannel = make(chan QueryRun)
@@ -319,6 +336,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.ResetContext(explainPlan)
 			m.loading = false
 			close(m.sqlChannel)
+			if !m.ctx.Analyzed {
+				return m, ExecuteQueryCmd
+			}
 		default:
 			m.spinner, cmd = m.spinner.Update(msg)
 			return m, cmd
