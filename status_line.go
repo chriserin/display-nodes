@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"strings"
-
-	"github.com/charmbracelet/x/ansi"
 )
 
 type StatusLine struct {
@@ -50,14 +48,5 @@ func (s StatusLine) View(ctx ProgramContext) string {
 		formatUnderscores(s.TotalRows),
 	)
 
-	var finalBuf strings.Builder
-
-	finalBuf.WriteString(result)
-
-	needed := ctx.Width - ansi.StringWidth(result)
-
-	finalBuf.WriteString(fmt.Sprintf("%*s%*s", needed-10, ctx.StatDisplay.String(), 10, ""))
-	finalBuf.WriteString("\n")
-
-	return finalBuf.String()
+	return result
 }

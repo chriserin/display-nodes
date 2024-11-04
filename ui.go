@@ -9,6 +9,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -178,6 +179,14 @@ func (s Source) DisplayName() string {
 	return file
 }
 
+func (s Source) View(ctx ProgramContext) string {
+	if s.sourceType == SOURCE_FILE {
+		return ctx.StatusStyles.AltNormal.Render(fmt.Sprintf("FILE - %s", s.DisplayName()))
+	} else {
+		return "STDIN"
+	}
+}
+
 type SourceType int
 
 const (
@@ -208,7 +217,11 @@ func ExecuteQueryCmd() tea.Msg {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(tea.EnterAltScreen, ExecuteQueryCmd)
+	if m.source.sourceType == SOURCE_STDIN {
+		return tea.EnterAltScreen
+	} else {
+		return tea.Batch(tea.EnterAltScreen, ExecuteQueryCmd)
+	}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -363,11 +376,24 @@ func displayedNodes(nodes []PlanNode, ctx ProgramContext) []PlanNode {
 func (m Model) View() string {
 	var buf strings.Builder
 
-	buf.WriteString(m.StatusLine.View(m.ctx))
+	var spinnerView string
 	if m.loading {
-		buf.WriteString(m.spinner.View())
+		spinnerView = m.spinner.View()
+	} else {
+		spinnerView = "  "
 	}
-	buf.WriteString(HeadersView(m.ctx, m.source))
+	buf.WriteString(spinnerView)
+	sourceView := m.source.View(m.ctx)
+	buf.WriteString(sourceView)
+
+	spaceAvailable := m.ctx.Width - ansi.StringWidth(sourceView)
+
+	buf.WriteString(fmt.Sprintf("%*s%*s\n", spaceAvailable-10, m.ctx.StatDisplay.String(), 10, ""))
+
+	statusLine := m.StatusLine.View(m.ctx)
+	buf.WriteString(statusLine)
+	buf.WriteString(HeadersView(m.ctx, m.ctx.Width-ansi.StringWidth(statusLine)))
+	buf.WriteString("\n")
 
 	for i, node := range m.DisplayNodes {
 		buf.WriteString(node.View(i, m.ctx))
@@ -384,27 +410,18 @@ func (m Model) View() string {
 	return buf.String()
 }
 
-func HeadersView(ctx ProgramContext, source Source) string {
-	var sourceOutput string
-
-	if source.sourceType == SOURCE_FILE {
-		sourceOutput = fmt.Sprintf("   %s", source.DisplayName())
-	} else {
-		sourceOutput = "   STDIN"
-	}
-
+func HeadersView(ctx ProgramContext, spaceAvailable int) string {
 	var headers string
 	if ctx.StatDisplay == DisplayTime {
-		headers = fmt.Sprintf("%15s%15s ", "Startup", "Total")
+		headers = fmt.Sprintf("%10s%15s ", "Startup", "Total")
 	} else if ctx.StatDisplay == DisplayCost {
-		headers = fmt.Sprintf("%15s%15s ", "Startup", "Total")
+		headers = fmt.Sprintf("%10s%15s ", "Startup", "Total")
 	} else if ctx.StatDisplay == DisplayBuffers {
-		headers = fmt.Sprintf("%15s%15s ", "Total", "Read")
+		headers = fmt.Sprintf("%10s%15s ", "Total", "Read")
 	} else if ctx.StatDisplay == DisplayRows {
-		headers = fmt.Sprintf("%15s%15s ", "Planned", "Actual")
+		headers = fmt.Sprintf("%10s%15s ", "Planned", "Actual")
 	} else if ctx.StatDisplay == DisplayNothing {
 		headers = ""
 	}
-	needed := ctx.Width - len(sourceOutput)
-	return fmt.Sprintf("%s%*s\n", sourceOutput, needed, headers)
+	return fmt.Sprintf("%*s", spaceAvailable, headers)
 }
