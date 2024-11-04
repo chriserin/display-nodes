@@ -196,11 +196,13 @@ const (
 
 func RunProgram(source Source) {
 	model := InitModel(source)
+
 	if source.sourceType == SOURCE_STDIN {
 		explainPlan := Convert(source.input)
 		model.UpdateModel(explainPlan)
 		model.ctx.ResetContext(explainPlan)
 	}
+
 	program := tea.NewProgram(
 		model,
 	)
@@ -401,6 +403,11 @@ func (m Model) View() string {
 	}
 
 	m.detailsViewport.Width = m.ctx.Width - 3
+	if m.ctx.SelectedNode.NodeType == "" {
+		m.detailsViewport.Height = 3
+	} else {
+		m.detailsViewport.Height = 10
+	}
 	m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
 
 	buf.WriteString("\n")

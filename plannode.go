@@ -252,6 +252,10 @@ func getRowStatus(percentOfActual float32, styles Styles) string {
 }
 
 func (node PlanNode) Content(ctx ProgramContext) string {
+	if node.NodeType == "" {
+		return "No Node Selected"
+	}
+
 	var buf strings.Builder
 
 	if node.abbrevName() != "" {
