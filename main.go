@@ -3,7 +3,6 @@ package main
 import (
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -48,11 +47,4 @@ func ExecuteExplain(query string) string {
 	pgConn.Connect()
 	defer pgConn.Close()
 	return pgConn.ExecuteExplain(query)
-}
-
-func CreatePgexDir() string {
-	workingDir, _ := os.Getwd()
-	dirPath := filepath.Join(workingDir, "_pgex")
-	os.MkdirAll(dirPath, 0755)
-	return dirPath
 }

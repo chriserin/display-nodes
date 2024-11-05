@@ -36,6 +36,8 @@ type keyMap struct {
 	PrevStatDisplay key.Binding
 	ToggleParallel  key.Binding
 	ReExecute       key.Binding
+	PrevQueryRun    key.Binding
+	NextQueryRun    key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
@@ -118,6 +120,14 @@ var keys = keyMap{
 		key.WithKeys("X"),
 		key.WithHelp("X", "ReExecute Query"),
 	),
+	PrevQueryRun: key.NewBinding(
+		key.WithKeys("{"),
+		key.WithHelp("{", "Prev Query Run"),
+	),
+	NextQueryRun: key.NewBinding(
+		key.WithKeys("}"),
+		key.WithHelp("}", "Next Query Run"),
+	),
 }
 
 type Model struct {
@@ -133,6 +143,7 @@ type Model struct {
 	spinner         spinner.Model
 	sqlChannel      chan QueryRun
 	loading         bool
+	pgexPointer     string
 }
 
 func InitModel(source Source) Model {
@@ -211,6 +222,18 @@ func RunProgram(source Source) {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
+}
+
+type previousQueryRunMsg struct{}
+
+func PreviousQueryRunCmd() tea.Msg {
+	return previousQueryRunMsg{}
+}
+
+type nextQueryRunMsg struct{}
+
+func NextQueryRunCmd() tea.Msg {
+	return nextQueryRunMsg{}
 }
 
 type executeQueryMsg struct{}
@@ -299,6 +322,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
 		case key.Matches(msg, m.keys.ReExecute):
 			return m, ExecuteQueryCmd
+		case key.Matches(msg, m.keys.PrevQueryRun):
+			return m, PreviousQueryRunCmd
+		case key.Matches(msg, m.keys.NextQueryRun):
+			return m, NextQueryRunCmd
 		default:
 			return m, tea.Println(msg)
 		}
@@ -326,14 +353,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.sqlChannel <- queryRun
 		}()
 		return m, m.spinner.Tick
+	case previousQueryRunMsg:
+		newQueryRun := m.queryRun.previousQueryRun()
+		if newQueryRun != m.queryRun {
+			UpdateModel(&m, newQueryRun)
+		}
+		return m, nil
+	case nextQueryRunMsg:
+		newQueryRun := m.queryRun.nextQueryRun()
+		if newQueryRun != m.queryRun {
+			UpdateModel(&m, newQueryRun)
+		}
+		return m, nil
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		select {
 		case queryRun := <-m.sqlChannel:
-			m.queryRun = queryRun
-			explainPlan := Convert(queryRun.result)
-			m.UpdateModel(explainPlan)
-			m.ctx.ResetContext(explainPlan)
+			UpdateModel(&m, queryRun)
 			m.loading = false
 			close(m.sqlChannel)
 			if !m.ctx.Analyzed {
@@ -348,6 +384,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func UpdateModel(m *Model, queryRun QueryRun) {
+	m.queryRun = queryRun
+	explainPlan := Convert(queryRun.result)
+	m.UpdateModel(explainPlan)
+	m.ctx.ResetContext(explainPlan)
 }
 
 func prevStatDisplay(ctx ProgramContext) StatView {
