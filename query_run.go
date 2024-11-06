@@ -20,6 +20,7 @@ type QueryRun struct {
 	result           string
 	originalFilename string
 	pgexPointer      string
+	settings         []Setting
 }
 
 var defaultPgexDir = "_pgex"

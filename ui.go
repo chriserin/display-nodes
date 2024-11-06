@@ -183,7 +183,7 @@ func (m *Model) SetDisplayNodes(nodes []PlanNode) {
 }
 
 func (m *Model) setSqlViewHeight() {
-	m.sqlViewport.Height = m.ctx.Height - len(m.DisplayNodes) - 6
+	m.sqlViewport.Height = m.ctx.Height - len(m.DisplayNodes) - 11
 }
 
 func NewViewPort() viewport.Model {
@@ -265,11 +265,28 @@ func ExecuteExplainQueryCmd() tea.Msg {
 	return executeExplainQueryMsg{}
 }
 
+type showAllMsg struct {
+	settings []Setting
+}
+
+func ShowAllCmd() tea.Msg {
+	return showAllMsg{settings: ShowAll()}
+}
+
+func ShowAll() []Setting {
+	pgConn := Connection{
+		databaseUrl: databaseUrl,
+	}
+	pgConn.Connect()
+	defer pgConn.Close()
+	return pgConn.ShowAll()
+}
+
 func (m Model) Init() tea.Cmd {
 	if m.source.sourceType == SOURCE_STDIN {
 		return nil
 	} else {
-		return ExecuteExplainQueryCmd
+		return tea.Batch(ExecuteExplainQueryCmd)
 	}
 }
 
@@ -348,6 +365,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 			return m, tea.Println(msg)
 		}
+	case showAllMsg:
+		m.queryRun.settings = msg.settings
 	case executeExplainQueryMsg:
 		m.loading = true
 		m.sqlChannel = make(chan QueryRun)
@@ -374,13 +393,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.spinner.Tick
 	case previousQueryRunMsg:
 		newQueryRun := m.queryRun.previousQueryRun()
-		if newQueryRun != m.queryRun {
+		if newQueryRun.pgexPointer != m.queryRun.pgexPointer {
 			UpdateModel(&m, newQueryRun)
 		}
 		return m, nil
 	case nextQueryRunMsg:
 		newQueryRun := m.queryRun.nextQueryRun()
-		if newQueryRun != m.queryRun {
+		if newQueryRun.pgexPointer != m.queryRun.pgexPointer {
 			UpdateModel(&m, newQueryRun)
 		}
 		return m, nil
@@ -393,6 +412,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			close(m.sqlChannel)
 			if !m.ctx.Analyzed {
 				return m, ExecuteQueryCmd
+			} else {
+				return m, ShowAllCmd
 			}
 		default:
 			m.spinner, cmd = m.spinner.Update(msg)
@@ -488,6 +509,10 @@ func (m Model) View() string {
 	}
 
 	buf.WriteString("\n")
+
+	for _, setting := range m.queryRun.settings {
+		buf.WriteString(fmt.Sprintf("%s: %s\n", setting.name, setting.setting))
+	}
 
 	if !m.help.ShowAll {
 		if m.ctx.DisplaySql {
