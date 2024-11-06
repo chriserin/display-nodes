@@ -20,24 +20,25 @@ import (
 // keyMap defines a set of keybindings. To work for help it must satisfy
 // key.Map. It could also very easily be a map[string]key.Binding.
 type keyMap struct {
-	AltOn           key.Binding
-	AltOff          key.Binding
-	IndentToggle    key.Binding
-	Up              key.Binding
-	Down            key.Binding
-	Help            key.Binding
-	Quit            key.Binding
-	JoinView        key.Binding
-	ToggleRows      key.Binding
-	ToggleBuffers   key.Binding
-	ToggleCost      key.Binding
-	ToggleTimes     key.Binding
-	NextStatDisplay key.Binding
-	PrevStatDisplay key.Binding
-	ToggleParallel  key.Binding
-	ReExecute       key.Binding
-	PrevQueryRun    key.Binding
-	NextQueryRun    key.Binding
+	IndentToggle     key.Binding
+	Up               key.Binding
+	Down             key.Binding
+	Help             key.Binding
+	Quit             key.Binding
+	JoinView         key.Binding
+	ToggleRows       key.Binding
+	ToggleBuffers    key.Binding
+	ToggleCost       key.Binding
+	ToggleTimes      key.Binding
+	ToggleDisplaySql key.Binding
+	NextStatDisplay  key.Binding
+	PrevStatDisplay  key.Binding
+	ToggleParallel   key.Binding
+	ReExecute        key.Binding
+	PrevQueryRun     key.Binding
+	NextQueryRun     key.Binding
+	SqlUp            key.Binding
+	SqlDown          key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
@@ -50,20 +51,12 @@ func (k keyMap) ShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.AltOn, k.AltOff, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.NextStatDisplay, k.PrevStatDisplay, k.ToggleParallel}, // first column
+		{k.Up, k.Down, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.NextStatDisplay, k.PrevStatDisplay, k.ToggleParallel, k.ToggleDisplaySql}, // first column
 		{k.Help, k.Quit}, // second column
 	}
 }
 
 var keys = keyMap{
-	AltOn: key.NewBinding(
-		key.WithKeys("a"),
-		key.WithHelp("a", "alt screen on"),
-	),
-	AltOff: key.NewBinding(
-		key.WithKeys("A"),
-		key.WithHelp("A", "alt screen off"),
-	),
 	IndentToggle: key.NewBinding(
 		key.WithKeys("I"),
 		key.WithHelp("I", "indent toggle"),
@@ -116,6 +109,10 @@ var keys = keyMap{
 		key.WithKeys("P"),
 		key.WithHelp("P", "Toggle Parallel"),
 	),
+	ToggleDisplaySql: key.NewBinding(
+		key.WithKeys("D"),
+		key.WithHelp("D", "Toggle Display SQL"),
+	),
 	ReExecute: key.NewBinding(
 		key.WithKeys("X"),
 		key.WithHelp("X", "ReExecute Query"),
@@ -128,6 +125,14 @@ var keys = keyMap{
 		key.WithKeys("}"),
 		key.WithHelp("}", "Next Query Run"),
 	),
+	SqlUp: key.NewBinding(
+		key.WithKeys("ctrl+p"),
+		key.WithHelp("ctrl+p", "SQL Up"),
+	),
+	SqlDown: key.NewBinding(
+		key.WithKeys("ctrl+n"),
+		key.WithHelp("ctrl+n", "SQL Down"),
+	),
 }
 
 type Model struct {
@@ -138,6 +143,7 @@ type Model struct {
 	DisplayNodes    []PlanNode
 	StatusLine      StatusLine
 	detailsViewport viewport.Model
+	sqlViewport     viewport.Model
 	source          Source
 	queryRun        QueryRun
 	spinner         spinner.Model
@@ -152,6 +158,7 @@ func InitModel(source Source) Model {
 		keys:            keys,
 		help:            help.New(),
 		detailsViewport: NewViewPort(),
+		sqlViewport:     NewViewPort(),
 		source:          source,
 		spinner:         initialSpinner(),
 	}
@@ -166,8 +173,17 @@ func initialSpinner() spinner.Model {
 
 func (m *Model) UpdateModel(explainPlan ExplainPlan) {
 	m.nodes = explainPlan.nodes
-	m.DisplayNodes = explainPlan.nodes
+	m.SetDisplayNodes(displayedNodes(explainPlan.nodes, m.ctx))
 	m.StatusLine = NewStatusLine(explainPlan)
+}
+
+func (m *Model) SetDisplayNodes(nodes []PlanNode) {
+	m.DisplayNodes = displayedNodes(nodes, m.ctx)
+	m.setSqlViewHeight()
+}
+
+func (m *Model) setSqlViewHeight() {
+	m.sqlViewport.Height = m.ctx.Height - len(m.DisplayNodes) - 6
 }
 
 func NewViewPort() viewport.Model {
@@ -216,6 +232,7 @@ func RunProgram(source Source) {
 
 	program := tea.NewProgram(
 		model,
+		tea.WithAltScreen(),
 	)
 
 	if _, err := program.Run(); err != nil {
@@ -250,9 +267,9 @@ func ExecuteExplainQueryCmd() tea.Msg {
 
 func (m Model) Init() tea.Cmd {
 	if m.source.sourceType == SOURCE_STDIN {
-		return tea.EnterAltScreen
+		return nil
 	} else {
-		return tea.Batch(tea.EnterAltScreen, ExecuteExplainQueryCmd)
+		return ExecuteExplainQueryCmd
 	}
 }
 
@@ -263,10 +280,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, m.keys.AltOn):
-			return m, tea.EnterAltScreen
-		case key.Matches(msg, m.keys.AltOff):
-			return m, tea.ExitAltScreen
 		case key.Matches(msg, m.keys.IndentToggle):
 			m.ctx.Indent = !m.ctx.Indent
 		case key.Matches(msg, m.keys.Up):
@@ -283,7 +296,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.help.ShowAll = !m.help.ShowAll
 		case key.Matches(msg, m.keys.JoinView):
 			m.ctx.JoinView = !m.ctx.JoinView
-			m.DisplayNodes = displayedNodes(m.nodes, m.ctx)
+			m.SetDisplayNodes(displayedNodes(m.nodes, m.ctx))
 			m.ctx.Cursor = 0
 			if len(m.DisplayNodes) > 0 {
 				m.ctx.SelectedNode = m.DisplayNodes[m.ctx.Cursor]
@@ -320,12 +333,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.StatDisplay = prevStatDisplay(m.ctx)
 		case key.Matches(msg, m.keys.ToggleParallel):
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
+		case key.Matches(msg, m.keys.ToggleDisplaySql):
+			m.ctx.DisplaySql = !m.ctx.DisplaySql
 		case key.Matches(msg, m.keys.ReExecute):
 			return m, ExecuteQueryCmd
 		case key.Matches(msg, m.keys.PrevQueryRun):
 			return m, PreviousQueryRunCmd
 		case key.Matches(msg, m.keys.NextQueryRun):
 			return m, NextQueryRunCmd
+		case key.Matches(msg, m.keys.SqlUp):
+			m.sqlViewport.LineUp(1)
+		case key.Matches(msg, m.keys.SqlDown):
+			m.sqlViewport.LineDown(1)
 		default:
 			return m, tea.Println(msg)
 		}
@@ -381,6 +400,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		m.ctx.Width = msg.Width
+		m.ctx.Height = msg.Height
+		m.setSqlViewHeight()
 	}
 
 	return m, nil
@@ -391,6 +412,7 @@ func UpdateModel(m *Model, queryRun QueryRun) {
 	explainPlan := Convert(queryRun.result)
 	m.UpdateModel(explainPlan)
 	m.ctx.ResetContext(explainPlan)
+	m.sqlViewport.SetContent(ansi.Wordwrap(queryRun.query, m.ctx.Width-6, ""))
 }
 
 func prevStatDisplay(ctx ProgramContext) StatView {
@@ -465,16 +487,23 @@ func (m Model) View() string {
 		buf.WriteString(node.View(i, m.ctx))
 	}
 
-	m.detailsViewport.Width = m.ctx.Width - 3
-	if m.ctx.SelectedNode.NodeType == "" {
-		m.detailsViewport.Height = 3
-	} else {
-		m.detailsViewport.Height = 10
-	}
-	m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
-
 	buf.WriteString("\n")
-	buf.WriteString(m.detailsViewport.View())
+
+	if !m.help.ShowAll {
+		if m.ctx.DisplaySql {
+			buf.WriteString(m.sqlViewport.View())
+		} else {
+			m.detailsViewport.Width = m.ctx.Width - 3
+			if m.ctx.SelectedNode.NodeType == "" {
+				m.detailsViewport.Height = 3
+			} else {
+				m.detailsViewport.Height = 10
+			}
+			m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
+			buf.WriteString(m.detailsViewport.View())
+		}
+	}
+
 	buf.WriteString("\n")
 	buf.WriteString(m.help.View(m.keys))
 

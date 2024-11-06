@@ -43,7 +43,9 @@ type ProgramContext struct {
 	DetailStyles     DetailStyles
 	SelectedNode     PlanNode
 	Width            int
+	Height           int
 	Analyzed         bool
+	DisplaySql       bool
 }
 
 type Styles struct {
