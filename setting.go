@@ -14,7 +14,7 @@ type Setting struct {
 
 func (setting *Setting) View() string {
 	spaceAvailable := 32 - ansi.StringWidth(setting.name)
-	return fmt.Sprintf("   %s: %*s\n", setting.name, spaceAvailable, setting.setting)
+	return fmt.Sprintf("%s: %*s\n", setting.name, spaceAvailable, setting.setting)
 }
 
 var settingPositions []string = []string{

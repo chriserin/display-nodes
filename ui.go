@@ -136,32 +136,34 @@ var keys = keyMap{
 }
 
 type Model struct {
-	keys            keyMap
-	help            help.Model
-	nodes           []PlanNode
-	ctx             ProgramContext
-	DisplayNodes    []PlanNode
-	StatusLine      StatusLine
-	detailsViewport viewport.Model
-	sqlViewport     viewport.Model
-	source          Source
-	queryRun        QueryRun
-	spinner         spinner.Model
-	sqlChannel      chan QueryRun
-	loading         bool
-	pgexPointer     string
-	nextRunSettings []Setting
+	keys             keyMap
+	help             help.Model
+	nodes            []PlanNode
+	ctx              ProgramContext
+	DisplayNodes     []PlanNode
+	StatusLine       StatusLine
+	detailsViewport  viewport.Model
+	sqlViewport      viewport.Model
+	settingsViewport viewport.Model
+	source           Source
+	queryRun         QueryRun
+	spinner          spinner.Model
+	sqlChannel       chan QueryRun
+	loading          bool
+	pgexPointer      string
+	nextRunSettings  []Setting
 }
 
 func InitModel(source Source) Model {
 	return Model{
-		ctx:             InitProgramContext(),
-		keys:            keys,
-		help:            help.New(),
-		detailsViewport: NewViewPort(),
-		sqlViewport:     NewViewPort(),
-		source:          source,
-		spinner:         initialSpinner(),
+		ctx:              InitProgramContext(),
+		keys:             keys,
+		help:             help.New(),
+		detailsViewport:  NewViewPort(10),
+		sqlViewport:      NewViewPort(10),
+		settingsViewport: NewViewPort(7),
+		source:           source,
+		spinner:          initialSpinner(),
 	}
 }
 
@@ -187,8 +189,8 @@ func (m *Model) setSqlViewHeight() {
 	m.sqlViewport.Height = m.ctx.Height - len(m.DisplayNodes) - 11
 }
 
-func NewViewPort() viewport.Model {
-	vp := viewport.New(80, 10)
+func NewViewPort(height int) viewport.Model {
+	vp := viewport.New(80, height)
 	vp.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
@@ -426,6 +428,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.Width = msg.Width
 		m.ctx.Height = msg.Height
 		m.setSqlViewHeight()
+		m.detailsViewport.Width = m.ctx.Width - 3
+		m.settingsViewport.Width = m.ctx.Width - 3
 	}
 
 	return m, nil
@@ -437,6 +441,7 @@ func UpdateModel(m *Model, queryRun QueryRun) {
 	m.UpdateModel(explainPlan)
 	m.ctx.ResetContext(explainPlan)
 	m.sqlViewport.SetContent(ansi.Wordwrap(queryRun.query, m.ctx.Width-6, ""))
+	m.settingsViewport.SetContent(SettingsView(queryRun.settings, m.ctx))
 }
 
 func prevStatDisplay(ctx ProgramContext) StatView {
@@ -511,22 +516,13 @@ func (m Model) View() string {
 		buf.WriteString(node.View(i, m.ctx))
 	}
 
+	buf.WriteString(m.settingsViewport.View())
 	buf.WriteString("\n")
-
-	for _, setting := range m.queryRun.settings {
-		buf.WriteString(setting.View())
-	}
 
 	if !m.help.ShowAll {
 		if m.ctx.DisplaySql {
 			buf.WriteString(m.sqlViewport.View())
 		} else {
-			m.detailsViewport.Width = m.ctx.Width - 3
-			if m.ctx.SelectedNode.NodeType == "" {
-				m.detailsViewport.Height = 3
-			} else {
-				m.detailsViewport.Height = 10
-			}
 			m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
 			buf.WriteString(m.detailsViewport.View())
 		}
@@ -552,4 +548,15 @@ func HeadersView(ctx ProgramContext, spaceAvailable int) string {
 		headers = ""
 	}
 	return fmt.Sprintf("%*s", spaceAvailable, headers)
+}
+
+func SettingsView(settings []Setting, ctx ProgramContext) string {
+	var buf strings.Builder
+	buf.WriteString("Settings\n")
+	buf.WriteString(strings.Repeat("-", ctx.Width))
+	buf.WriteString("\n")
+	for _, setting := range settings {
+		buf.WriteString(setting.View())
+	}
+	return buf.String()
 }
