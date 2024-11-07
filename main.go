@@ -40,11 +40,14 @@ func main() {
 
 var databaseUrl = "postgres://postgres:postgres@localhost:5432/galaxy_dev"
 
-func ExecuteExplain(query string) string {
+func ExecuteExplain(query string, settings []Setting) string {
 	pgConn := Connection{
 		databaseUrl: databaseUrl,
 	}
 	pgConn.Connect()
 	defer pgConn.Close()
+	for _, setting := range settings {
+		pgConn.SetSetting(setting)
+	}
 	return pgConn.ExecuteExplain(query)
 }

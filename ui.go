@@ -150,6 +150,7 @@ type Model struct {
 	sqlChannel      chan QueryRun
 	loading         bool
 	pgexPointer     string
+	nextRunSettings []Setting
 }
 
 func InitModel(source Source) Model {
@@ -286,7 +287,7 @@ func (m Model) Init() tea.Cmd {
 	if m.source.sourceType == SOURCE_STDIN {
 		return nil
 	} else {
-		return tea.Batch(ExecuteExplainQueryCmd)
+		return tea.Sequence(ShowAllCmd, ExecuteExplainQueryCmd)
 	}
 }
 
@@ -366,14 +367,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Println(msg)
 		}
 	case showAllMsg:
-		m.queryRun.settings = msg.settings
+		settings := msg.settings
+		slices.SortFunc(settings, SettingCompare)
+		m.nextRunSettings = settings
 	case executeExplainQueryMsg:
 		m.loading = true
 		m.sqlChannel = make(chan QueryRun)
 		go func() {
 			queryRun := NewQueryRun(m.source.fileName)
 			queryWithExplain := queryRun.WithExplain()
-			result := ExecuteExplain(queryWithExplain)
+			queryRun.settings = m.nextRunSettings
+			result := ExecuteExplain(queryWithExplain, m.nextRunSettings)
 			queryRun.SetResult(result)
 			m.sqlChannel <- queryRun
 		}()
@@ -383,8 +387,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.sqlChannel = make(chan QueryRun)
 		go func() {
 			queryRun := NewQueryRun(m.source.fileName)
+			queryRun.settings = m.nextRunSettings
 			queryWithExplain := queryRun.WithExplainAnalyze()
-			result := ExecuteExplain(queryWithExplain)
+			result := ExecuteExplain(queryWithExplain, m.nextRunSettings)
 			queryRun.SetResult(result)
 			pgexDir := CreatePgexDir()
 			queryRun.WritePgexFile(pgexDir)
@@ -412,8 +417,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			close(m.sqlChannel)
 			if !m.ctx.Analyzed {
 				return m, ExecuteQueryCmd
-			} else {
-				return m, ShowAllCmd
 			}
 		default:
 			m.spinner, cmd = m.spinner.Update(msg)
@@ -511,7 +514,7 @@ func (m Model) View() string {
 	buf.WriteString("\n")
 
 	for _, setting := range m.queryRun.settings {
-		buf.WriteString(fmt.Sprintf("%s: %s\n", setting.name, setting.setting))
+		buf.WriteString(setting.View())
 	}
 
 	if !m.help.ShowAll {

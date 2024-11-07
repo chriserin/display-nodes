@@ -23,12 +23,21 @@ func (c *Connection) Connect() {
 	c.conn = conn
 }
 
+func (c Connection) SetSetting(setting Setting) {
+	settingSql := setting.Sql()
+	_, err := c.conn.Exec(context.Background(), settingSql)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s failed: %v\n", settingSql, err)
+		os.Exit(1)
+	}
+}
+
 func (c Connection) ExecuteExplain(query string) string {
 
 	var explainResult string
 	err := c.conn.QueryRow(context.Background(), query).Scan(&explainResult)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Executing query failed: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -37,11 +46,6 @@ func (c Connection) ExecuteExplain(query string) string {
 
 func (c Connection) Close() {
 	c.conn.Close(context.Background())
-}
-
-type Setting struct {
-	name    string
-	setting string
 }
 
 var allowedSettings = []string{"work_mem", "join_collapse_limit", "max_parallel_workers_per_gather", "random_page_cost", "effective_cache_size"}
