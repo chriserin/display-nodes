@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/x/ansi"
 )
@@ -39,4 +40,13 @@ func SettingCompare(a, b Setting) int {
 
 func (setting Setting) Sql() string {
 	return fmt.Sprintf("SET %s = '%s'", setting.name, setting.setting)
+}
+
+func (setting Setting) Marshal() string {
+	return fmt.Sprintf("%s=%s", setting.name, setting.setting)
+}
+
+func SettingUnmarshal(settingstr string) Setting {
+	splitstr := strings.Split(settingstr, "=")
+	return Setting{name: splitstr[0], setting: splitstr[1]}
 }

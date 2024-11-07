@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 var extension string = ".pgex"
@@ -71,14 +73,35 @@ func loadQueryRun(pgexFile string) QueryRun {
 	}
 
 	contents := string(body)
-	dividedContents := strings.Split(contents, divider)
+	if !strings.Contains(contents, sqlDivider) {
+		panic("wrong pgex format no settings above divider")
+	}
 
-	sql := dividedContents[0]
-	plan := dividedContents[1]
+	if !strings.Contains(contents, explainDivider) {
+		panic("wrong pgex format no sql above divider")
+	}
+
+	settingsAbove := strings.Split(contents, sqlDivider)
+
+	settingsContent := settingsAbove[0]
+
+	settingsStrings := strings.Split(settingsContent, "\n")
+
+	var settings []Setting
+	for _, settingStr := range settingsStrings {
+		if ansi.StringWidth(strings.Trim(settingStr, " ")) > 0 {
+			settings = append(settings, SettingUnmarshal(settingStr))
+		}
+	}
+
+	sqlAbove := strings.Split(settingsAbove[1], explainDivider)
+
+	sql := sqlAbove[0]
+	plan := sqlAbove[1]
 
 	_, file := path.Split(pgexFile)
 
-	return QueryRun{query: sql, result: plan, pgexPointer: file}
+	return QueryRun{query: sql, result: plan, pgexPointer: file, settings: settings}
 }
 
 func getQueryRunEntries() []string {
@@ -152,10 +175,25 @@ func (q QueryRun) pgexFilename() string {
 	return fmt.Sprintf("%s_%s%s", formattedNow, name, extension)
 }
 
-var divider = "---------------- SQL ABOVE / EXPLAIN JSON BELOW ----------------"
+var explainDivider = "---------------- SQL ABOVE / EXPLAIN JSON BELOW ----------------"
+var sqlDivider = "---------------- SETTINGS ABOVE / SQL BELOW ----------------"
 
 func (q QueryRun) pgexFileContent() string {
-	return fmt.Sprintf("%s\n\n%s\n\n%s\n", q.query, divider, q.result)
+	var buf strings.Builder
+	for _, setting := range q.settings {
+		buf.WriteString(setting.Marshal())
+		buf.WriteString("\n")
+	}
+	buf.WriteString("\n\n")
+	buf.WriteString(sqlDivider)
+	buf.WriteString("\n\n")
+	buf.WriteString(q.query)
+	buf.WriteString("\n\n")
+	buf.WriteString(explainDivider)
+	buf.WriteString("\n\n")
+	buf.WriteString(q.result)
+	buf.WriteString("\n\n")
+	return buf.String()
 }
 
 func (q QueryRun) WithExplain() string {
