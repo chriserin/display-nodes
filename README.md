@@ -25,3 +25,5 @@ Display Nodes is a tool that enhances the readability of postgres query plans.
 - [x] Plan Width
 - [x] Cobra command POC
 - [x] Save file format
+- [x] Refine Settings display
+- [x] Allow user to alter settings

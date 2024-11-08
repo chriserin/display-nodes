@@ -50,3 +50,35 @@ func SettingUnmarshal(settingstr string) Setting {
 	splitstr := strings.Split(settingstr, "=")
 	return Setting{name: splitstr[0], setting: splitstr[1]}
 }
+
+var SettingsValues map[string][]string = map[string][]string{
+	"work_mem":                        []string{"4MB", "40MB", "400MB", "800MB", "1GB", "2GB", "3GB", "4GB"},
+	"random_page_cost":                []string{"1", "1.1", "2", "3", "4"},
+	"join_collapse_limit":             []string{"1", "2", "3", "4", "5", "6", "7", "8"},
+	"effective_cache_size":            []string{"4GB"},
+	"max_parallel_workers_per_gather": []string{"1", "2", "3", "4", "5", "6", "7", "8"},
+}
+
+func (setting *Setting) IncrementSetting() {
+	values := SettingsValues[setting.name]
+	for i, value := range values {
+		if value == setting.setting {
+			if i+1 < len(values) {
+				setting.setting = values[i+1]
+			}
+			break
+		}
+	}
+}
+
+func (setting *Setting) DecrementSetting() {
+	values := SettingsValues[setting.name]
+	for i, value := range values {
+		if value == setting.setting {
+			if i-1 >= 0 {
+				setting.setting = values[i-1]
+			}
+			break
+		}
+	}
+}

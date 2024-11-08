@@ -43,6 +43,8 @@ type keyMap struct {
 	NextQueryRun       key.Binding
 	SqlUp              key.Binding
 	SqlDown            key.Binding
+	SettingIncrement   key.Binding
+	SettingDecrement   key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
@@ -55,7 +57,7 @@ func (k keyMap) ShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.SettingsUp, k.SettingsDown, k.ToggleSettingsType, k.ToggleSettings, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.NextStatDisplay, k.PrevStatDisplay, k.ToggleParallel, k.ToggleDisplaySql, k.SqlUp, k.SqlDown}, // first column
+		{k.Up, k.Down, k.SettingsUp, k.SettingsDown, k.ToggleSettingsType, k.ToggleSettings, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.NextStatDisplay, k.PrevStatDisplay, k.ToggleParallel, k.ToggleDisplaySql, k.SqlUp, k.SqlDown, k.SettingIncrement, k.SettingDecrement}, // first column
 		{k.Help, k.Quit}, // second column
 	}
 }
@@ -152,6 +154,14 @@ var keys = keyMap{
 	ToggleSettingsType: key.NewBinding(
 		key.WithKeys("s"),
 		key.WithHelp("s", "Toggle Settings Type"),
+	),
+	SettingIncrement: key.NewBinding(
+		key.WithKeys("+"),
+		key.WithHelp("+", "Increment Setting"),
+	),
+	SettingDecrement: key.NewBinding(
+		key.WithKeys("-"),
+		key.WithHelp("-", "Decrement Setting"),
 	),
 }
 
@@ -400,6 +410,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.sqlViewport.LineUp(1)
 		case key.Matches(msg, m.keys.SqlDown):
 			m.sqlViewport.LineDown(1)
+		case key.Matches(msg, m.keys.SettingIncrement):
+			m.nextRunSettings[m.ctx.SettingsCursor].IncrementSetting()
+			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
+		case key.Matches(msg, m.keys.SettingDecrement):
+			m.nextRunSettings[m.ctx.SettingsCursor].DecrementSetting()
+			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
 		default:
 			return m, tea.Println(msg)
 		}
