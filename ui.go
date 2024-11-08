@@ -599,9 +599,9 @@ func SettingsView(settings []Setting, nextSettings []Setting, ctx ProgramContext
 	buf.WriteString("Settings")
 	var settingsIndicator string
 	if ctx.DisplayNextSettings {
-		settingsIndicator = fmt.Sprintf("%s | %s", ctx.SettingsStyles.SelectedSettingsType.Render("PGEX"), "NEXT")
-	} else {
 		settingsIndicator = fmt.Sprintf("%s | %s", "PGEX", ctx.SettingsStyles.SelectedSettingsType.Render("NEXT"))
+	} else {
+		settingsIndicator = fmt.Sprintf("%s | %s", ctx.SettingsStyles.SelectedSettingsType.Render("PGEX"), "NEXT")
 	}
 	spaceAvailable := ctx.Width - 15
 	buf.WriteString(lipgloss.PlaceHorizontal(spaceAvailable, lipgloss.Right, settingsIndicator))
@@ -611,8 +611,8 @@ func SettingsView(settings []Setting, nextSettings []Setting, ctx ProgramContext
 	buf.WriteString("\n")
 
 	for i, setting := range currentDisplaySettings {
-		if i == ctx.SettingsCursor {
-			buf.WriteString(ctx.CursorStyle.Everything.Render(setting.View()))
+		if i == ctx.SettingsCursor && ctx.DisplayNextSettings {
+			buf.WriteString(ctx.SettingsStyles.Cursor.Render(setting.View()))
 		} else {
 			buf.WriteString(ctx.NormalStyle.Everything.Render(setting.View()))
 		}
