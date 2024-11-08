@@ -31,21 +31,25 @@ func (s StatView) String() string {
 }
 
 type ProgramContext struct {
-	Indent           bool
-	Cursor           int
-	JoinView         bool
-	StatDisplay      StatView
-	DisplayParallel  bool
-	NormalStyle      Styles
-	CursorStyle      Styles
-	ChildCursorStyle Styles
-	StatusStyles     StatusStyles
-	DetailStyles     DetailStyles
-	SelectedNode     PlanNode
-	Width            int
-	Height           int
-	Analyzed         bool
-	DisplaySql       bool
+	Indent              bool
+	Cursor              int
+	SettingsCursor      int
+	JoinView            bool
+	StatDisplay         StatView
+	DisplayParallel     bool
+	NormalStyle         Styles
+	CursorStyle         Styles
+	ChildCursorStyle    Styles
+	StatusStyles        StatusStyles
+	DetailStyles        DetailStyles
+	SettingsStyles      SettingsStyles
+	SelectedNode        PlanNode
+	Width               int
+	Height              int
+	Analyzed            bool
+	DisplaySql          bool
+	DisplaySettings     bool
+	DisplayNextSettings bool
 }
 
 type Styles struct {
@@ -71,6 +75,11 @@ type DetailStyles struct {
 	Warning lipgloss.Style
 }
 
+type SettingsStyles struct {
+	Cursor               lipgloss.Style
+	SelectedSettingsType lipgloss.Style
+}
+
 func InitProgramContext() ProgramContext {
 	normal := NormalStyles()
 
@@ -83,12 +92,14 @@ func InitProgramContext() ProgramContext {
 		ChildCursorStyle: ChildCursorStyle(normal),
 		StatusStyles:     StatusLineStyles(),
 		DetailStyles:     DetailViewStyles(),
+		SettingsStyles:   SettingsViewStyles(),
 		StatDisplay:      DisplayRows,
 	}
 }
 
 func (ctx *ProgramContext) ResetContext(explainPlan ExplainPlan) {
 	ctx.Cursor = 0
+	ctx.SettingsCursor = 0
 	ctx.SelectedNode = explainPlan.nodes[0]
 	ctx.Analyzed = explainPlan.analyzed
 }
@@ -114,6 +125,13 @@ func DetailViewStyles() DetailStyles {
 	return DetailStyles{
 		Label:   lipgloss.NewStyle().Bold(true),
 		Warning: lipgloss.NewStyle().Background(lipgloss.Color("#880000")),
+	}
+}
+
+func SettingsViewStyles() SettingsStyles {
+	return SettingsStyles{
+		Cursor:               lipgloss.NewStyle().Background(lipgloss.Color("#222277")),
+		SelectedSettingsType: lipgloss.NewStyle().Background(lipgloss.Color("#ffc777")).Foreground(lipgloss.Color("#000000")),
 	}
 }
 

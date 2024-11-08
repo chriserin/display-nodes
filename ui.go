@@ -20,25 +20,29 @@ import (
 // keyMap defines a set of keybindings. To work for help it must satisfy
 // key.Map. It could also very easily be a map[string]key.Binding.
 type keyMap struct {
-	IndentToggle     key.Binding
-	Up               key.Binding
-	Down             key.Binding
-	Help             key.Binding
-	Quit             key.Binding
-	JoinView         key.Binding
-	ToggleRows       key.Binding
-	ToggleBuffers    key.Binding
-	ToggleCost       key.Binding
-	ToggleTimes      key.Binding
-	ToggleDisplaySql key.Binding
-	NextStatDisplay  key.Binding
-	PrevStatDisplay  key.Binding
-	ToggleParallel   key.Binding
-	ReExecute        key.Binding
-	PrevQueryRun     key.Binding
-	NextQueryRun     key.Binding
-	SqlUp            key.Binding
-	SqlDown          key.Binding
+	IndentToggle       key.Binding
+	Up                 key.Binding
+	Down               key.Binding
+	SettingsUp         key.Binding
+	SettingsDown       key.Binding
+	ToggleSettingsType key.Binding
+	ToggleSettings     key.Binding
+	Help               key.Binding
+	Quit               key.Binding
+	JoinView           key.Binding
+	ToggleRows         key.Binding
+	ToggleBuffers      key.Binding
+	ToggleCost         key.Binding
+	ToggleTimes        key.Binding
+	ToggleDisplaySql   key.Binding
+	NextStatDisplay    key.Binding
+	PrevStatDisplay    key.Binding
+	ToggleParallel     key.Binding
+	ReExecute          key.Binding
+	PrevQueryRun       key.Binding
+	NextQueryRun       key.Binding
+	SqlUp              key.Binding
+	SqlDown            key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
@@ -51,7 +55,7 @@ func (k keyMap) ShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.NextStatDisplay, k.PrevStatDisplay, k.ToggleParallel, k.ToggleDisplaySql, k.SqlUp, k.SqlDown}, // first column
+		{k.Up, k.Down, k.SettingsUp, k.SettingsDown, k.ToggleSettingsType, k.ToggleSettings, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.NextStatDisplay, k.PrevStatDisplay, k.ToggleParallel, k.ToggleDisplaySql, k.SqlUp, k.SqlDown}, // first column
 		{k.Help, k.Quit}, // second column
 	}
 }
@@ -68,6 +72,14 @@ var keys = keyMap{
 	Down: key.NewBinding(
 		key.WithKeys("down", "j"),
 		key.WithHelp("↓/j", "move down"),
+	),
+	SettingsUp: key.NewBinding(
+		key.WithKeys("ctrl+k"),
+		key.WithHelp("ctrl+k", "settings up"),
+	),
+	SettingsDown: key.NewBinding(
+		key.WithKeys("ctrl+j"),
+		key.WithHelp("ctrl+j", "settings down"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),
@@ -132,6 +144,14 @@ var keys = keyMap{
 	SqlDown: key.NewBinding(
 		key.WithKeys("ctrl+n"),
 		key.WithHelp("ctrl+n", "SQL Down"),
+	),
+	ToggleSettings: key.NewBinding(
+		key.WithKeys("S"),
+		key.WithHelp("S", "Toggle Settings"),
+	),
+	ToggleSettingsType: key.NewBinding(
+		key.WithKeys("s"),
+		key.WithHelp("s", "Toggle Settings Type"),
 	),
 }
 
@@ -312,6 +332,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.Cursor = m.ctx.Cursor + 1
 				m.ctx.SelectedNode = m.DisplayNodes[m.ctx.Cursor]
 			}
+		case key.Matches(msg, m.keys.SettingsUp):
+			if m.ctx.SettingsCursor-1 >= 0 {
+				m.ctx.SettingsCursor = m.ctx.SettingsCursor - 1
+			}
+			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
+		case key.Matches(msg, m.keys.SettingsDown):
+			if m.ctx.SettingsCursor+1 < len(m.nextRunSettings) {
+				m.ctx.SettingsCursor = m.ctx.SettingsCursor + 1
+			}
+			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
+		case key.Matches(msg, m.keys.ToggleSettingsType):
+			m.ctx.DisplayNextSettings = !m.ctx.DisplayNextSettings
+			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
+		case key.Matches(msg, m.keys.ToggleSettings):
+			m.ctx.DisplaySettings = !m.ctx.DisplaySettings
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
 		case key.Matches(msg, m.keys.JoinView):
@@ -430,6 +465,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.setSqlViewHeight()
 		m.detailsViewport.Width = m.ctx.Width - 3
 		m.settingsViewport.Width = m.ctx.Width - 3
+		m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
 	}
 
 	return m, nil
@@ -441,7 +477,7 @@ func UpdateModel(m *Model, queryRun QueryRun) {
 	m.UpdateModel(explainPlan)
 	m.ctx.ResetContext(explainPlan)
 	m.sqlViewport.SetContent(ansi.Wordwrap(queryRun.query, m.ctx.Width-6, ""))
-	m.settingsViewport.SetContent(SettingsView(queryRun.settings, m.ctx))
+	m.settingsViewport.SetContent(SettingsView(queryRun.settings, m.nextRunSettings, m.ctx))
 }
 
 func prevStatDisplay(ctx ProgramContext) StatView {
@@ -550,13 +586,37 @@ func HeadersView(ctx ProgramContext, spaceAvailable int) string {
 	return fmt.Sprintf("%*s", spaceAvailable, headers)
 }
 
-func SettingsView(settings []Setting, ctx ProgramContext) string {
+func SettingsView(settings []Setting, nextSettings []Setting, ctx ProgramContext) string {
 	var buf strings.Builder
-	buf.WriteString("Settings\n")
+
+	var currentDisplaySettings []Setting
+	if ctx.DisplayNextSettings {
+		currentDisplaySettings = nextSettings
+	} else {
+		currentDisplaySettings = settings
+	}
+
+	buf.WriteString("Settings")
+	var settingsIndicator string
+	if ctx.DisplayNextSettings {
+		settingsIndicator = fmt.Sprintf("%s | %s", ctx.SettingsStyles.SelectedSettingsType.Render("PGEX"), "NEXT")
+	} else {
+		settingsIndicator = fmt.Sprintf("%s | %s", "PGEX", ctx.SettingsStyles.SelectedSettingsType.Render("NEXT"))
+	}
+	spaceAvailable := ctx.Width - 15
+	buf.WriteString(lipgloss.PlaceHorizontal(spaceAvailable, lipgloss.Right, settingsIndicator))
+	buf.WriteString("\n")
+
 	buf.WriteString(strings.Repeat("-", ctx.Width))
 	buf.WriteString("\n")
-	for _, setting := range settings {
-		buf.WriteString(setting.View())
+
+	for i, setting := range currentDisplaySettings {
+		if i == ctx.SettingsCursor {
+			buf.WriteString(ctx.CursorStyle.Everything.Render(setting.View()))
+		} else {
+			buf.WriteString(ctx.NormalStyle.Everything.Render(setting.View()))
+		}
+		buf.WriteString("\n")
 	}
 	return buf.String()
 }
