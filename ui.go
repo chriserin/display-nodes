@@ -552,8 +552,10 @@ func (m Model) View() string {
 		buf.WriteString(node.View(i, m.ctx))
 	}
 
-	buf.WriteString(m.settingsViewport.View())
-	buf.WriteString("\n")
+	if m.ctx.DisplaySettings {
+		buf.WriteString(m.settingsViewport.View())
+		buf.WriteString("\n")
+	}
 
 	if !m.help.ShowAll {
 		if m.ctx.DisplaySql {
