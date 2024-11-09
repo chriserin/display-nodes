@@ -561,16 +561,11 @@ func (m Model) View() string {
 
 	statusLine := m.StatusLine.View(m.ctx)
 	buf.WriteString(statusLine)
-	buf.WriteString(HeadersView(m.ctx, m.ctx.Width-ansi.StringWidth(statusLine)))
+	buf.WriteString(HeadersView(m.ctx, m.ctx.Width-ansi.StringWidth(statusLine)-1))
 	buf.WriteString("\n")
 
 	for i, node := range m.DisplayNodes {
 		buf.WriteString(node.View(i, m.ctx))
-	}
-
-	if m.ctx.DisplaySettings {
-		buf.WriteString(m.settingsViewport.View())
-		buf.WriteString("\n")
 	}
 
 	if !m.help.ShowAll {
@@ -580,9 +575,14 @@ func (m Model) View() string {
 			m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
 			buf.WriteString(m.detailsViewport.View())
 		}
+		buf.WriteString("\n")
 	}
 
-	buf.WriteString("\n")
+	if m.ctx.DisplaySettings {
+		buf.WriteString(m.settingsViewport.View())
+		buf.WriteString("\n")
+	}
+
 	buf.WriteString(m.help.View(m.keys))
 
 	return buf.String()

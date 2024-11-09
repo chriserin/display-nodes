@@ -95,7 +95,7 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 
 	result := buf.String()
 
-	needed := ctx.Width - ansi.StringWidth(result)
+	needed := ctx.Width - ansi.StringWidth(result) - 2
 
 	if ctx.StatDisplay == DisplayRows {
 		buf.WriteString(node.rows(styles, needed, ctx))
