@@ -56,7 +56,7 @@ var SettingsValues map[string][]string = map[string][]string{
 	"random_page_cost":                []string{"1", "1.1", "2", "3", "4"},
 	"join_collapse_limit":             []string{"1", "2", "3", "4", "5", "6", "7", "8"},
 	"effective_cache_size":            []string{"4GB"},
-	"max_parallel_workers_per_gather": []string{"1", "2", "3", "4", "5", "6", "7", "8"},
+	"max_parallel_workers_per_gather": []string{"0", "1", "2", "3", "4", "5", "6", "7", "8"},
 }
 
 func (setting *Setting) IncrementSetting() {
