@@ -286,16 +286,36 @@ func NextQueryRunCmd() tea.Msg {
 	return nextQueryRunMsg{}
 }
 
-type executeQueryMsg struct{}
-
-func ExecuteQueryCmd() tea.Msg {
-	return executeQueryMsg{}
+type executeQueryMsg struct {
+	queryRun QueryRun
 }
 
-type executeExplainQueryMsg struct{}
+func ExecuteQueryCmd(fileName string, settings []Setting) tea.Cmd {
+	return func() tea.Msg {
+		queryRun := NewQueryRun(fileName)
+		queryWithExplain := queryRun.WithExplainAnalyze()
+		queryRun.settings = settings
+		result := ExecuteExplain(queryWithExplain, settings)
+		queryRun.SetResult(result)
+		pgexDir := CreatePgexDir()
+		queryRun.WritePgexFile(pgexDir)
+		return executeQueryMsg{queryRun: queryRun}
+	}
+}
 
-func ExecuteExplainQueryCmd() tea.Msg {
-	return executeExplainQueryMsg{}
+type executeExplainQueryMsg struct {
+	queryRun QueryRun
+}
+
+func ExecuteExplainQueryCmd(fileName string, settings []Setting) tea.Cmd {
+	return func() tea.Msg {
+		queryRun := NewQueryRun(fileName)
+		queryWithExplain := queryRun.WithExplain()
+		queryRun.settings = settings
+		result := ExecuteExplain(queryWithExplain, settings)
+		queryRun.SetResult(result)
+		return executeExplainQueryMsg{queryRun: queryRun}
+	}
 }
 
 type showAllMsg struct {
@@ -319,7 +339,7 @@ func (m Model) Init() tea.Cmd {
 	if m.source.sourceType == SOURCE_STDIN {
 		return nil
 	} else {
-		return tea.Sequence(ShowAllCmd, ExecuteExplainQueryCmd)
+		return ShowAllCmd
 	}
 }
 
@@ -401,7 +421,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.ToggleDisplaySql):
 			m.ctx.DisplaySql = !m.ctx.DisplaySql
 		case key.Matches(msg, m.keys.ReExecute):
-			return m, ExecuteQueryCmd
+			return m, ExecuteQueryCmd(m.source.fileName, m.nextRunSettings)
 		case key.Matches(msg, m.keys.PrevQueryRun):
 			return m, PreviousQueryRunCmd
 		case key.Matches(msg, m.keys.NextQueryRun):
@@ -423,32 +443,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		settings := msg.settings
 		slices.SortFunc(settings, SettingCompare)
 		m.nextRunSettings = settings
+		m.loading = true
+		return m, tea.Batch(m.spinner.Tick, ExecuteExplainQueryCmd(m.source.fileName, m.nextRunSettings))
 	case executeExplainQueryMsg:
+		UpdateModel(&m, msg.queryRun)
 		m.loading = true
-		m.sqlChannel = make(chan QueryRun)
-		go func() {
-			queryRun := NewQueryRun(m.source.fileName)
-			queryWithExplain := queryRun.WithExplain()
-			queryRun.settings = m.nextRunSettings
-			result := ExecuteExplain(queryWithExplain, m.nextRunSettings)
-			queryRun.SetResult(result)
-			m.sqlChannel <- queryRun
-		}()
-		return m, m.spinner.Tick
+		return m, ExecuteQueryCmd(m.source.fileName, m.nextRunSettings)
 	case executeQueryMsg:
-		m.loading = true
-		m.sqlChannel = make(chan QueryRun)
-		go func() {
-			queryRun := NewQueryRun(m.source.fileName)
-			queryRun.settings = m.nextRunSettings
-			queryWithExplain := queryRun.WithExplainAnalyze()
-			result := ExecuteExplain(queryWithExplain, m.nextRunSettings)
-			queryRun.SetResult(result)
-			pgexDir := CreatePgexDir()
-			queryRun.WritePgexFile(pgexDir)
-			m.sqlChannel <- queryRun
-		}()
-		return m, m.spinner.Tick
+		UpdateModel(&m, msg.queryRun)
+		m.loading = false
+		return m, nil
 	case previousQueryRunMsg:
 		newQueryRun := m.queryRun.previousQueryRun()
 		if newQueryRun.pgexPointer != m.queryRun.pgexPointer {
@@ -463,16 +467,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case spinner.TickMsg:
 		var cmd tea.Cmd
-		select {
-		case queryRun := <-m.sqlChannel:
-			UpdateModel(&m, queryRun)
-			m.loading = false
-			close(m.sqlChannel)
-			if !m.ctx.Analyzed {
-				return m, ExecuteQueryCmd
-			}
-		default:
-			m.spinner, cmd = m.spinner.Update(msg)
+		m.spinner, cmd = m.spinner.Update(msg)
+		if m.loading {
 			return m, cmd
 		}
 	case tea.WindowSizeMsg:
