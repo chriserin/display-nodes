@@ -14,7 +14,6 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/viewport"
 )
 
 // keyMap defines a set of keybindings. To work for help it must satisfy
@@ -172,9 +171,9 @@ type Model struct {
 	ctx              ProgramContext
 	DisplayNodes     []PlanNode
 	StatusLine       StatusLine
-	detailsViewport  viewport.Model
-	sqlViewport      viewport.Model
-	settingsViewport viewport.Model
+	detailsViewport  Section
+	sqlViewport      Section
+	settingsViewport Section
 	source           Source
 	queryRun         QueryRun
 	spinner          spinner.Model
@@ -189,9 +188,9 @@ func InitModel(source Source) Model {
 		ctx:              InitProgramContext(),
 		keys:             keys,
 		help:             help.New(),
-		detailsViewport:  NewViewPort(10),
-		sqlViewport:      NewViewPort(10),
-		settingsViewport: NewViewPort(7),
+		detailsViewport:  NewSection("Details", 80, 10),
+		sqlViewport:      NewSection("SQL", 80, 10),
+		settingsViewport: NewSection("Settings", 80, 7),
 		source:           source,
 		spinner:          initialSpinner(),
 	}
@@ -216,16 +215,7 @@ func (m *Model) SetDisplayNodes(nodes []PlanNode) {
 }
 
 func (m *Model) setSqlViewHeight() {
-	m.sqlViewport.Height = m.ctx.Height - len(m.DisplayNodes) - 11
-}
-
-func NewViewPort(height int) viewport.Model {
-	vp := viewport.New(80, height)
-	vp.Style = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("62")).
-		PaddingRight(2).PaddingLeft(2)
-	return vp
+	m.sqlViewport.SetDimensions(m.ctx.Width-1, m.ctx.Height-len(m.DisplayNodes)-13)
 }
 
 type Source struct {
@@ -374,6 +364,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
 		case key.Matches(msg, m.keys.ToggleSettingsType):
 			m.ctx.DisplayNextSettings = !m.ctx.DisplayNextSettings
+			m.settingsViewport.subtitle = SettingsSubtitle(m.ctx)
 			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
 		case key.Matches(msg, m.keys.ToggleSettings):
 			m.ctx.DisplaySettings = !m.ctx.DisplaySettings
@@ -475,8 +466,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.Width = msg.Width
 		m.ctx.Height = msg.Height
 		m.setSqlViewHeight()
-		m.detailsViewport.Width = m.ctx.Width - 3
-		m.settingsViewport.Width = m.ctx.Width - 3
+		m.detailsViewport.SetDimensions(m.ctx.Width-1, 10)
+		m.settingsViewport.SetDimensions(m.ctx.Width-1, 7)
 		m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
 	}
 
@@ -489,6 +480,7 @@ func UpdateModel(m *Model, queryRun QueryRun) {
 	m.UpdateModel(explainPlan)
 	m.ctx.ResetContext(explainPlan)
 	m.sqlViewport.SetContent(ansi.Wordwrap(queryRun.query, m.ctx.Width-6, ""))
+	m.settingsViewport.subtitle = SettingsSubtitle(m.ctx)
 	m.settingsViewport.SetContent(SettingsView(queryRun.settings, m.nextRunSettings, m.ctx))
 }
 
@@ -566,9 +558,12 @@ func (m Model) View() string {
 
 	if !m.help.ShowAll {
 		if m.ctx.DisplaySql {
+			buf.WriteString("\n")
 			buf.WriteString(m.sqlViewport.View())
 		} else {
 			m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
+			m.detailsViewport.subtitle = m.ctx.NormalStyle.NodeName.Render(m.ctx.SelectedNode.name())
+			buf.WriteString("\n")
 			buf.WriteString(m.detailsViewport.View())
 		}
 		buf.WriteString("\n")
@@ -600,6 +595,16 @@ func HeadersView(ctx ProgramContext, spaceAvailable int) string {
 	return fmt.Sprintf("%*s", spaceAvailable, headers)
 }
 
+func SettingsSubtitle(ctx ProgramContext) string {
+	var settingsIndicator string
+	if ctx.DisplayNextSettings {
+		settingsIndicator = fmt.Sprintf("%s | %s", "PGEX", ctx.SettingsStyles.SelectedSettingsType.Render("NEXT"))
+	} else {
+		settingsIndicator = fmt.Sprintf("%s | %s", ctx.SettingsStyles.SelectedSettingsType.Render("PGEX"), "NEXT")
+	}
+	return settingsIndicator
+}
+
 func SettingsView(settings []Setting, nextSettings []Setting, ctx ProgramContext) string {
 	var buf strings.Builder
 
@@ -609,20 +614,6 @@ func SettingsView(settings []Setting, nextSettings []Setting, ctx ProgramContext
 	} else {
 		currentDisplaySettings = settings
 	}
-
-	buf.WriteString("Settings")
-	var settingsIndicator string
-	if ctx.DisplayNextSettings {
-		settingsIndicator = fmt.Sprintf("%s | %s", "PGEX", ctx.SettingsStyles.SelectedSettingsType.Render("NEXT"))
-	} else {
-		settingsIndicator = fmt.Sprintf("%s | %s", ctx.SettingsStyles.SelectedSettingsType.Render("PGEX"), "NEXT")
-	}
-	spaceAvailable := ctx.Width - 15
-	buf.WriteString(lipgloss.PlaceHorizontal(spaceAvailable, lipgloss.Right, settingsIndicator))
-	buf.WriteString("\n")
-
-	buf.WriteString(strings.Repeat("-", ctx.Width))
-	buf.WriteString("\n")
 
 	for i, setting := range currentDisplaySettings {
 		if i == ctx.SettingsCursor && ctx.DisplayNextSettings {

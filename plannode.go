@@ -258,15 +258,6 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 
 	var buf strings.Builder
 
-	if node.abbrevName() != "" {
-		buf.WriteString(ctx.NormalStyle.NodeName.Render(node.abbrevName()))
-		buf.WriteString(" - ")
-	}
-
-	buf.WriteString(ctx.NormalStyle.NodeName.Render(node.name()))
-	buf.WriteString("\n")
-	buf.WriteString(strings.Repeat("-", ctx.Width))
-	buf.WriteString("\n")
 	if node.Analyzed.TempReadBlocks > 0 {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Temp Read Blocks: "))
 		buf.WriteString(ctx.DetailStyles.Warning.Render(strconv.Itoa(node.Analyzed.TempReadBlocks)))
