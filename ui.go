@@ -556,14 +556,13 @@ func (m Model) View() string {
 		buf.WriteString(node.View(i, m.ctx))
 	}
 
+	buf.WriteString("\n")
 	if !m.help.ShowAll {
 		if m.ctx.DisplaySql {
-			buf.WriteString("\n")
 			buf.WriteString(m.sqlViewport.View())
 		} else {
 			m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
 			m.detailsViewport.subtitle = m.ctx.NormalStyle.NodeName.Render(m.ctx.SelectedNode.name())
-			buf.WriteString("\n")
 			buf.WriteString(m.detailsViewport.View())
 		}
 		buf.WriteString("\n")
