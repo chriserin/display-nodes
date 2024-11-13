@@ -130,8 +130,8 @@ func DetailViewStyles() DetailStyles {
 
 func SettingsViewStyles() SettingsStyles {
 	return SettingsStyles{
-		Cursor:               lipgloss.NewStyle().Background(lipgloss.Color("#222277")),
-		SelectedSettingsType: lipgloss.NewStyle().Background(lipgloss.Color("#ffc777")).Foreground(lipgloss.Color("#000000")),
+		Cursor:               lipgloss.NewStyle().Background(lipgloss.Color("#452297")),
+		SelectedSettingsType: lipgloss.NewStyle().Background(lipgloss.Color("#65bcff")).Foreground(lipgloss.Color("#000000")),
 	}
 }
 
