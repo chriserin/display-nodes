@@ -37,6 +37,7 @@ type keyMap struct {
 	NextStatDisplay    key.Binding
 	PrevStatDisplay    key.Binding
 	ToggleParallel     key.Binding
+	ToggleNumbers      key.Binding
 	ReExecute          key.Binding
 	PrevQueryRun       key.Binding
 	NextQueryRun       key.Binding
@@ -56,7 +57,7 @@ func (k keyMap) ShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.SettingsUp, k.SettingsDown, k.ToggleSettingsType, k.ToggleSettings, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.NextStatDisplay, k.PrevStatDisplay, k.ToggleParallel, k.ToggleDisplaySql, k.SqlUp, k.SqlDown, k.SettingIncrement, k.SettingDecrement}, // first column
+		{k.Up, k.Down, k.SettingsUp, k.SettingsDown, k.ToggleSettingsType, k.ToggleSettings, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.NextStatDisplay, k.PrevStatDisplay, k.ToggleParallel, k.ToggleNumbers, k.ToggleDisplaySql, k.SqlUp, k.SqlDown, k.SettingIncrement, k.SettingDecrement}, // first column
 		{k.Help, k.Quit}, // second column
 	}
 }
@@ -121,6 +122,10 @@ var keys = keyMap{
 	ToggleParallel: key.NewBinding(
 		key.WithKeys("P"),
 		key.WithHelp("P", "Toggle Parallel"),
+	),
+	ToggleNumbers: key.NewBinding(
+		key.WithKeys("N"),
+		key.WithHelp("N", "Toggle Numbers"),
 	),
 	ToggleDisplaySql: key.NewBinding(
 		key.WithKeys("D"),
@@ -409,6 +414,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.StatDisplay = prevStatDisplay(m.ctx)
 		case key.Matches(msg, m.keys.ToggleParallel):
 			m.ctx.DisplayParallel = !m.ctx.DisplayParallel
+		case key.Matches(msg, m.keys.ToggleNumbers):
+			m.ctx.DisplayNumbers = !m.ctx.DisplayNumbers
 		case key.Matches(msg, m.keys.ToggleDisplaySql):
 			m.ctx.DisplaySql = !m.ctx.DisplaySql
 		case key.Matches(msg, m.keys.ReExecute):

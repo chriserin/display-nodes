@@ -69,7 +69,11 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 	}
 
 	var buf strings.Builder
-	buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%2d ", i+1)))
+	if ctx.DisplayNumbers {
+		buf.WriteString(styles.Gutter.Render(fmt.Sprintf("%2d ", i+1)))
+	} else {
+		buf.WriteString("   ")
+	}
 
 	if ctx.DisplayParallel {
 		if viewPosition.BelowGather {

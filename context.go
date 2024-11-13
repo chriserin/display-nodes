@@ -37,6 +37,7 @@ type ProgramContext struct {
 	JoinView            bool
 	StatDisplay         StatView
 	DisplayParallel     bool
+	DisplayNumbers      bool
 	NormalStyle         Styles
 	CursorStyle         Styles
 	ChildCursorStyle    Styles
