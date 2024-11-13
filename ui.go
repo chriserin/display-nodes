@@ -486,6 +486,7 @@ func UpdateModel(m *Model, queryRun QueryRun) {
 	explainPlan := Convert(queryRun.result)
 	m.UpdateModel(explainPlan)
 	m.ctx.ResetContext(explainPlan)
+	m.ctx.SelectedNode = m.DisplayNodes[0]
 	m.sqlViewport.SetContent(ansi.Wordwrap(queryRun.query, m.ctx.Width-6, ""))
 	m.settingsViewport.subtitle = SettingsSubtitle(m.ctx)
 	m.settingsViewport.SetContent(SettingsView(queryRun.settings, m.nextRunSettings, m.ctx))
