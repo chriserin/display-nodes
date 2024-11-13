@@ -180,6 +180,7 @@ type Model struct {
 	sqlViewport      Section
 	settingsViewport Section
 	source           Source
+	originalSource   Source
 	queryRun         QueryRun
 	spinner          spinner.Model
 	sqlChannel       chan QueryRun
@@ -197,6 +198,7 @@ func InitModel(source Source) Model {
 		sqlViewport:      NewSection("SQL", 80, 10),
 		settingsViewport: NewSection("Settings", 80, 7),
 		source:           source,
+		originalSource:   source,
 		spinner:          initialSpinner(),
 	}
 }
@@ -422,7 +424,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.ToggleDisplaySql):
 			m.ctx.DisplaySql = !m.ctx.DisplaySql
 		case key.Matches(msg, m.keys.ReExecute):
-			return m, ExecuteQueryCmd(m.source.fileName, m.nextRunSettings)
+			return m, ExecuteQueryCmd(m.originalSource.fileName, m.nextRunSettings)
 		case key.Matches(msg, m.keys.PrevQueryRun):
 			return m, PreviousQueryRunCmd
 		case key.Matches(msg, m.keys.NextQueryRun):
