@@ -223,6 +223,14 @@ func (m *Model) setSqlViewHeight() {
 	m.sqlViewport.SetDimensions(m.ctx.Width-1, m.ctx.Height-len(m.DisplayNodes)-13)
 }
 
+type SourceType int
+
+const (
+	SOURCE_STDIN SourceType = iota
+	SOURCE_FILE
+	SOURCE_PGEX
+)
+
 type Source struct {
 	sourceType SourceType
 	fileName   string
@@ -237,17 +245,12 @@ func (s Source) DisplayName() string {
 func (s Source) View(ctx ProgramContext) string {
 	if s.sourceType == SOURCE_FILE {
 		return ctx.StatusStyles.AltNormal.Render(fmt.Sprintf("FILE - %s", s.DisplayName()))
+	} else if s.sourceType == SOURCE_PGEX {
+		return ctx.StatusStyles.AltNormal.Render(fmt.Sprintf("PGEX - %s", s.DisplayName()))
 	} else {
 		return "STDIN"
 	}
 }
-
-type SourceType int
-
-const (
-	SOURCE_STDIN SourceType = iota
-	SOURCE_FILE
-)
 
 func RunProgram(source Source) {
 	model := InitModel(source)
@@ -455,12 +458,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		newQueryRun := m.queryRun.previousQueryRun()
 		if newQueryRun.pgexPointer != m.queryRun.pgexPointer {
 			UpdateModel(&m, newQueryRun)
+			m.source = Source{sourceType: SOURCE_PGEX, fileName: newQueryRun.pgexPointer}
 		}
 		return m, nil
 	case nextQueryRunMsg:
 		newQueryRun := m.queryRun.nextQueryRun()
 		if newQueryRun.pgexPointer != m.queryRun.pgexPointer {
 			UpdateModel(&m, newQueryRun)
+			m.source = Source{sourceType: SOURCE_PGEX, fileName: newQueryRun.pgexPointer}
 		}
 		return m, nil
 	case spinner.TickMsg:
