@@ -91,7 +91,7 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 
 	if ctx.JoinView && node.RelationName != "" {
 		buf.WriteString(styles.NodeName.Render(node.abbrevName()))
-		buf.WriteString(" - ")
+		buf.WriteString(styles.Everything.Render(" - "))
 		buf.WriteString(styles.Relation.Render(node.RelationName))
 	} else {
 		buf.WriteString(styles.NodeName.Render(node.name()))
