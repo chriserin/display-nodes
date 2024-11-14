@@ -51,7 +51,6 @@ func (c Connection) Close() {
 var allowedSettings = []string{"work_mem", "join_collapse_limit", "max_parallel_workers_per_gather", "random_page_cost", "effective_cache_size"}
 
 func (c Connection) ShowAll() []Setting {
-	var result []Setting
 	rows, err := c.conn.Query(context.Background(), "show all")
 
 	if err != nil {
@@ -59,6 +58,7 @@ func (c Connection) ShowAll() []Setting {
 		os.Exit(1)
 	}
 
+	result := make([]Setting, 0, len(allowedSettings))
 	for rows.Next() {
 		var name, setting, description string
 		rows.Scan(&name, &setting, &description)

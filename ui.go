@@ -534,7 +534,7 @@ func nextStatDisplay(ctx ProgramContext) StatView {
 }
 
 func displayedNodes(nodes []PlanNode, ctx ProgramContext) []PlanNode {
-	resultNodes := make([]PlanNode, 0, 1)
+	resultNodes := make([]PlanNode, 0, len(nodes))
 
 	for _, node := range nodes {
 		if node.Display(ctx) {

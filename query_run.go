@@ -87,7 +87,7 @@ func loadQueryRun(pgexFile string) QueryRun {
 
 	settingsStrings := strings.Split(settingsContent, "\n")
 
-	var settings []Setting
+	settings := make([]Setting, len(settingsStrings))
 	for _, settingStr := range settingsStrings {
 		if ansi.StringWidth(strings.Trim(settingStr, " ")) > 0 {
 			settings = append(settings, SettingUnmarshal(settingStr))
@@ -110,7 +110,7 @@ func getQueryRunEntries() []string {
 		log.Fatal(err)
 	}
 
-	var pgexFiles []string
+	pgexFiles := make([]string, len(dirEntries))
 	wd, _ := os.Getwd()
 	for _, d := range dirEntries {
 		pgexFile := regexp.MustCompile(`[0-9]{14}_.*\.pgex`)
