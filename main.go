@@ -7,9 +7,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func main() {
-	var filename string
+var cliOptions struct {
+	filename string
+	database string
+}
 
+func main() {
 	var rootCmd = &cobra.Command{
 		Use:   "pg_explain",
 		Short: "read explain in json format from stdin",
@@ -24,8 +27,8 @@ func main() {
 				return
 			}
 
-			if filename != "" {
-				source := Source{sourceType: SOURCE_FILE, fileName: filename}
+			if cliOptions.filename != "" {
+				source := Source{sourceType: SOURCE_FILE, fileName: cliOptions.filename}
 				RunProgram(source)
 			}
 		},
@@ -33,16 +36,20 @@ func main() {
 
 	rootCmd.
 		Flags().
-		StringVarP(&filename, "filename", "f", "", "filename of sql file")
+		StringVarP(&cliOptions.filename, "filename", "f", "", "filename of sql file")
+
+	rootCmd.
+		Flags().
+		StringVarP(&cliOptions.database, "database", "d", "", "database")
 
 	rootCmd.Execute()
 }
 
-var databaseUrl = "postgres://postgres:postgres@localhost:5432/galaxy_dev"
+var databaseUrl = "postgres://postgres:postgres@localhost:5432/"
 
 func ExecuteExplain(query string, settings []Setting) string {
 	pgConn := Connection{
-		databaseUrl: databaseUrl,
+		databaseUrl: databaseUrl + cliOptions.database,
 	}
 	pgConn.Connect()
 	defer pgConn.Close()
