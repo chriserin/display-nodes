@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 )
+
+const VERSION = "0.1.0"
 
 var cliOptions struct {
 	filename string
@@ -30,7 +33,10 @@ func main() {
 			if cliOptions.filename != "" {
 				source := Source{sourceType: SOURCE_FILE, fileName: cliOptions.filename}
 				RunProgram(source)
+				return
 			}
+			cmd.Help()
+			os.Exit(1)
 		},
 	}
 
@@ -41,6 +47,16 @@ func main() {
 	rootCmd.
 		Flags().
 		StringVarP(&cliOptions.database, "database", "d", "", "database")
+
+	cmdVersion := &cobra.Command{
+		Use:   "version",
+		Short: "Print version",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("pg_explain v%s\n", VERSION)
+		},
+	}
+
+	rootCmd.AddCommand(cmdVersion)
 
 	rootCmd.Execute()
 }
