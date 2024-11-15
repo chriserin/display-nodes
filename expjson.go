@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
 	"slices"
 	"strings"
 )
@@ -52,11 +54,28 @@ func decodeJson(data string) (map[string]interface{}, float64, bool) {
 	err := json.Unmarshal([]byte(data), &decoded)
 
 	if err != nil {
-		panic("panic!")
+		fmt.Fprintln(os.Stderr, "Error parsing json:", err)
+		os.Exit(1)
 	}
 
-	planObject := decoded.([]interface{})[0].(map[string]interface{})
-	plan := planObject["Plan"].(map[string]interface{})
+	planJson, ok := decoded.([]interface{})
+	if !ok && len(planJson) != 1 {
+		fmt.Fprintf(os.Stderr, "Unexpected value in json, expected array: %v\n", decoded)
+		os.Exit(1)
+	}
+
+	planObject, ok := planJson[0].(map[string]interface{})
+	if !ok {
+		fmt.Fprintf(os.Stderr, "Unexpected value in json, expected object: %v\n", planJson[0])
+		os.Exit(1)
+	}
+
+	plan, ok := planObject["Plan"].(map[string]interface{})
+	if !ok {
+		fmt.Fprintf(os.Stderr, "Unexpected value in json, expected 'Plan' attribute: %v\n", planObject)
+		os.Exit(1)
+	}
+
 	executionTime, analyzed := planObject["Execution Time"].(float64)
 
 	return plan, executionTime, analyzed
