@@ -111,6 +111,19 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 		filter = ""
 	}
 
+	hashcond, ok := plan["Hash Cond"].(string)
+	if !ok {
+		hashcond = ""
+	}
+
+	var groupkeys []string
+	groupkeyI, ok := plan["Group Key"].([]interface{})
+	if ok {
+		for _, gi := range groupkeyI {
+			groupkeys = append(groupkeys, gi.(string))
+		}
+	}
+
 	planWidth := plan["Plan Width"].(float64)
 
 	actualLoops, ok := plan["Actual Loops"].(float64)
@@ -176,6 +189,8 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 		IndexName:          indexName,
 		IndexCond:          indexCond,
 		Filter:             filter,
+		HashCond:           hashcond,
+		GroupKey:           groupkeys,
 		ParentRelationship: parentRelationship,
 		ParentIsNestedLoop: parseContext.ParentNestedLoop,
 		PlanWidth:          int(planWidth),

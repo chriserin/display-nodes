@@ -32,6 +32,8 @@ type PlanNode struct {
 	IndexName          string
 	IndexCond          string
 	Filter             string
+	HashCond           string
+	GroupKey           []string
 	ParentRelationship string
 	ParentIsNestedLoop bool
 	Analyzed           Analyzed
@@ -290,6 +292,16 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 	if node.IndexCond != "" {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Index Cond: "))
 		buf.WriteString(ctx.NormalStyle.Everything.Render(node.IndexCond))
+		buf.WriteString("\n")
+	}
+	if node.HashCond != "" {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Hash Cond: "))
+		buf.WriteString(ctx.NormalStyle.Everything.Render(node.HashCond))
+		buf.WriteString("\n")
+	}
+	if node.GroupKey != nil {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Group Keys: "))
+		buf.WriteString(ctx.NormalStyle.Everything.Render(strings.Join(node.GroupKey, ", ")))
 		buf.WriteString("\n")
 	}
 	if node.Filter != "" {
