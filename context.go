@@ -95,6 +95,8 @@ func InitProgramContext() ProgramContext {
 		DetailStyles:     DetailViewStyles(),
 		SettingsStyles:   SettingsViewStyles(),
 		StatDisplay:      DisplayRows,
+		DisplayNumbers:   true,
+		DisplayParallel:  true,
 	}
 }
 
