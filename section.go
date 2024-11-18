@@ -14,9 +14,9 @@ type Section struct {
 	subtitle string
 }
 
-var settingsColor = lipgloss.Color("#452297")
-var titleStyle lipgloss.Style = lipgloss.NewStyle().Background(settingsColor)
-var topBarStyle lipgloss.Style = lipgloss.NewStyle().Foreground(settingsColor)
+var borderColor = lipgloss.Color("#452297")
+var titleStyle lipgloss.Style = lipgloss.NewStyle().Background(borderColor)
+var topBarStyle lipgloss.Style = lipgloss.NewStyle().Foreground(borderColor)
 
 func (s Section) View() string {
 	var buf strings.Builder
@@ -37,7 +37,7 @@ func NewSection(title string, width, height int) Section {
 	vp := viewport.New(width-1, height-1)
 	vp.Style = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder(), false, true, true, true).
-		BorderForeground(lipgloss.Color("62")).
+		BorderForeground(borderColor).
 		PaddingRight(2).PaddingLeft(2)
 
 	return Section{title: title, viewport: vp}
