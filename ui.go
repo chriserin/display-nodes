@@ -6,6 +6,7 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -14,6 +15,7 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/stopwatch"
 )
 
 // keyMap defines a set of keybindings. To work for help it must satisfy
@@ -183,6 +185,7 @@ type Model struct {
 	originalSource   Source
 	queryRun         QueryRun
 	spinner          spinner.Model
+	stopwatch        stopwatch.Model
 	sqlChannel       chan QueryRun
 	loading          bool
 	pgexPointer      string
@@ -425,7 +428,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.DisplaySql = !m.ctx.DisplaySql
 		case key.Matches(msg, m.keys.ReExecute):
 			m.loading = true
-			return m, tea.Batch(m.spinner.Tick, ExecuteQueryCmd(m.originalSource.fileName, m.nextRunSettings))
+			m.stopwatch = stopwatch.NewWithInterval(time.Millisecond * 100)
+			return m, tea.Batch(m.stopwatch.Init(), m.spinner.Tick, ExecuteQueryCmd(m.originalSource.fileName, m.nextRunSettings))
 		case key.Matches(msg, m.keys.PrevQueryRun):
 			return m, PreviousQueryRunCmd
 		case key.Matches(msg, m.keys.NextQueryRun):
@@ -452,11 +456,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case executeExplainQueryMsg:
 		UpdateModel(&m, msg.queryRun)
 		m.loading = true
-		return m, ExecuteQueryCmd(m.source.fileName, m.nextRunSettings)
+		m.stopwatch = stopwatch.NewWithInterval(time.Millisecond * 100)
+		return m, tea.Batch(m.stopwatch.Init(), ExecuteQueryCmd(m.source.fileName, m.nextRunSettings))
 	case executeQueryMsg:
 		UpdateModel(&m, msg.queryRun)
 		m.loading = false
-		return m, nil
+		return m, tea.Batch(m.stopwatch.Stop(), m.stopwatch.Reset())
 	case previousQueryRunMsg:
 		newQueryRun := m.queryRun.previousQueryRun()
 		if newQueryRun.pgexPointer != m.queryRun.pgexPointer {
@@ -474,6 +479,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
+		if m.loading {
+			return m, cmd
+		}
+	case stopwatch.StartStopMsg:
+		var cmd tea.Cmd
+		m.stopwatch, cmd = m.stopwatch.Update(msg)
+		return m, cmd
+	case stopwatch.TickMsg:
+		var cmd tea.Cmd
+		m.stopwatch, cmd = m.stopwatch.Update(msg)
 		if m.loading {
 			return m, cmd
 		}
@@ -563,7 +578,7 @@ func (m Model) View() string {
 
 	buf.WriteString(fmt.Sprintf("%*s%*s\n", spaceAvailable-10, m.ctx.StatDisplay.String(), 10, ""))
 
-	statusLine := m.StatusLine.View(m.ctx)
+	statusLine := m.StatusLine.View(m)
 	buf.WriteString(statusLine)
 	buf.WriteString(HeadersView(m.ctx, m.ctx.Width-ansi.StringWidth(statusLine)-1))
 	buf.WriteString("\n")

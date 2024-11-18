@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 type StatusLine struct {
@@ -19,10 +20,10 @@ func NewStatusLine(explainPlan ExplainPlan) StatusLine {
 	}
 }
 
-func (s StatusLine) View(ctx ProgramContext) string {
-	styles := ctx.StatusStyles
+func (s StatusLine) View(m Model) string {
+	styles := m.ctx.StatusStyles
 
-	if ctx.Width < 30 {
+	if m.ctx.Width < 30 {
 		return ""
 	}
 
@@ -42,8 +43,14 @@ func (s StatusLine) View(ctx ProgramContext) string {
 	buf.WriteString(styles.Value.Render(" %s "))
 	buf.WriteString(styles.AltNormal.Render(" "))
 
+	var executionTime float64
+	if m.loading {
+		executionTime = float64(int64(m.stopwatch.Elapsed() / time.Millisecond))
+	} else {
+		executionTime = s.ExecutionTime
+	}
 	result := fmt.Sprintf(buf.String(),
-		s.ExecutionTime,
+		executionTime,
 		formatUnderscores(s.TotalBuffers),
 		formatUnderscores(s.TotalRows),
 	)
