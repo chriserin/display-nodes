@@ -14,7 +14,7 @@ type Section struct {
 	subtitle string
 }
 
-var settingsColor = lipgloss.Color("#6644b7")
+var settingsColor = lipgloss.Color("#452297")
 var titleStyle lipgloss.Style = lipgloss.NewStyle().Background(settingsColor)
 var topBarStyle lipgloss.Style = lipgloss.NewStyle().Foreground(settingsColor)
 
