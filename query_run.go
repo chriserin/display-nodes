@@ -54,15 +54,17 @@ func (q QueryRun) nextQueryRun() QueryRun {
 	pgexFiles := getQueryRunEntries()
 	var currentIndex int
 	for i, pgexFile := range pgexFiles {
-		if strings.Contains(pgexFile, q.pgexPointer) {
+		if q.pgexPointer != "" && strings.Contains(pgexFile, q.pgexPointer) {
 			currentIndex = i
 		}
 	}
 
 	if currentIndex+1 < len(pgexFiles) {
 		return loadQueryRun(pgexFiles[currentIndex+1])
-	} else {
+	} else if q.pgexPointer != "" {
 		return q
+	} else {
+		return loadQueryRun(pgexFiles[len(pgexFiles)-1])
 	}
 }
 

@@ -341,6 +341,8 @@ func ShowAll() []Setting {
 func (m Model) Init() tea.Cmd {
 	if m.source.sourceType == SOURCE_STDIN {
 		return nil
+	} else if m.source.sourceType == SOURCE_PGEX {
+		return NextQueryRunCmd
 	} else {
 		return ShowAllCmd
 	}
