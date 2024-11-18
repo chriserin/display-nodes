@@ -424,7 +424,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.ToggleDisplaySql):
 			m.ctx.DisplaySql = !m.ctx.DisplaySql
 		case key.Matches(msg, m.keys.ReExecute):
-			return m, ExecuteQueryCmd(m.originalSource.fileName, m.nextRunSettings)
+			m.loading = true
+			return m, tea.Batch(m.spinner.Tick, ExecuteQueryCmd(m.originalSource.fileName, m.nextRunSettings))
 		case key.Matches(msg, m.keys.PrevQueryRun):
 			return m, PreviousQueryRunCmd
 		case key.Matches(msg, m.keys.NextQueryRun):
