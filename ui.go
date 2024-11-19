@@ -331,7 +331,7 @@ func ShowAllCmd() tea.Msg {
 
 func ShowAll() []Setting {
 	pgConn := Connection{
-		databaseUrl: databaseUrl,
+		connConfig: ConnConfig,
 	}
 	pgConn.Connect()
 	defer pgConn.Close()

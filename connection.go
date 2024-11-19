@@ -10,12 +10,12 @@ import (
 )
 
 type Connection struct {
-	databaseUrl string
-	conn        *pgx.Conn
+	conn       *pgx.Conn
+	connConfig pgx.ConnConfig
 }
 
 func (c *Connection) Connect() {
-	conn, err := pgx.Connect(context.Background(), c.databaseUrl)
+	conn, err := pgx.ConnectConfig(context.Background(), &c.connConfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
