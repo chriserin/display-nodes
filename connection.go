@@ -14,34 +14,30 @@ type Connection struct {
 	connConfig pgx.ConnConfig
 }
 
-func (c *Connection) Connect() {
+func (c *Connection) Connect() error {
 	conn, err := pgx.ConnectConfig(context.Background(), &c.connConfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 	c.conn = conn
+	return nil
 }
 
-func (c Connection) SetSetting(setting Setting) {
+func (c Connection) SetSetting(setting Setting) error {
 	settingSql := setting.Sql()
 	_, err := c.conn.Exec(context.Background(), settingSql)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s failed: %v\n", settingSql, err)
-		os.Exit(1)
-	}
+	return err
 }
 
-func (c Connection) ExecuteExplain(query string) string {
+func (c Connection) ExecuteExplain(query string) (string, error) {
 
 	var explainResult string
 	err := c.conn.QueryRow(context.Background(), query).Scan(&explainResult)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Executing query failed: %v\n", err)
-		os.Exit(1)
+		return "", err
 	}
 
-	return explainResult
+	return explainResult, nil
 }
 
 func (c Connection) Close() {

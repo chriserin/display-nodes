@@ -190,6 +190,8 @@ type Model struct {
 	loading          bool
 	pgexPointer      string
 	nextRunSettings  []Setting
+	error            error
+	errorViewport    Section
 }
 
 func InitModel(source Source) Model {
@@ -203,6 +205,7 @@ func InitModel(source Source) Model {
 		source:           source,
 		originalSource:   source,
 		spinner:          initialSpinner(),
+		errorViewport:    NewSection("!Error!", 80, 7),
 	}
 }
 
@@ -293,12 +296,19 @@ type executeQueryMsg struct {
 	queryRun QueryRun
 }
 
+type errorMsg struct {
+	error error
+}
+
 func ExecuteQueryCmd(fileName string, settings []Setting) tea.Cmd {
 	return func() tea.Msg {
 		queryRun := NewQueryRun(fileName)
 		queryWithExplain := queryRun.WithExplainAnalyze()
 		queryRun.settings = settings
-		result := ExecuteExplain(queryWithExplain, settings)
+		result, err := ExecuteExplain(queryWithExplain, settings)
+		if err != nil {
+			return errorMsg{error: err}
+		}
 		queryRun.SetResult(result)
 		pgexDir := CreatePgexDir()
 		queryRun.WritePgexFile(pgexDir)
@@ -315,7 +325,10 @@ func ExecuteExplainQueryCmd(fileName string, settings []Setting) tea.Cmd {
 		queryRun := NewQueryRun(fileName)
 		queryWithExplain := queryRun.WithExplain()
 		queryRun.settings = settings
-		result := ExecuteExplain(queryWithExplain, settings)
+		result, err := ExecuteExplain(queryWithExplain, settings)
+		if err != nil {
+			return errorMsg{error: err}
+		}
 		queryRun.SetResult(result)
 		return executeExplainQueryMsg{queryRun: queryRun}
 	}
@@ -326,16 +339,23 @@ type showAllMsg struct {
 }
 
 func ShowAllCmd() tea.Msg {
-	return showAllMsg{settings: ShowAll()}
+	settings, err := ShowAll()
+	if err != nil {
+		return errorMsg{error: err}
+	}
+	return showAllMsg{settings: settings}
 }
 
-func ShowAll() []Setting {
+func ShowAll() ([]Setting, error) {
 	pgConn := Connection{
 		connConfig: ConnConfig,
 	}
-	pgConn.Connect()
+	err := pgConn.Connect()
+	if err != nil {
+		return nil, err
+	}
 	defer pgConn.Close()
-	return pgConn.ShowAll()
+	return pgConn.ShowAll(), nil
 }
 
 func (m Model) Init() tea.Cmd {
@@ -478,6 +498,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.source = Source{sourceType: SOURCE_PGEX, fileName: newQueryRun.pgexPointer}
 		}
 		return m, nil
+	case errorMsg:
+		m.error = msg.error
+		m.errorViewport.SetContent(msg.error.Error())
+		return m, nil
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
@@ -591,7 +615,9 @@ func (m Model) View() string {
 
 	buf.WriteString("\n")
 	if !m.help.ShowAll {
-		if m.ctx.DisplaySql {
+		if m.error != nil {
+			buf.WriteString(m.errorViewport.View())
+		} else if m.ctx.DisplaySql {
 			buf.WriteString(m.sqlViewport.View())
 		} else {
 			m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))

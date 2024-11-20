@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -206,14 +207,23 @@ func appendConfigFromFile(path string) error {
 
 var databaseUrl = "postgres://postgres:postgres@localhost:5432/"
 
-func ExecuteExplain(query string, settings []Setting) string {
+func ExecuteExplain(query string, settings []Setting) (string, error) {
 	pgConn := Connection{
 		connConfig: ConnConfig,
 	}
-	pgConn.Connect()
+
+	err := pgConn.Connect()
+	if err != nil {
+		return "", err
+	}
+
 	defer pgConn.Close()
+
 	for _, setting := range settings {
-		pgConn.SetSetting(setting)
+		err := pgConn.SetSetting(setting)
+		if err != nil {
+			return "", err
+		}
 	}
 	return pgConn.ExecuteExplain(query)
 }
