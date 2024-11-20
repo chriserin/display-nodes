@@ -59,6 +59,7 @@ func main() {
 			if cliOptions.filename == "" {
 				source := Source{sourceType: SOURCE_PGEX}
 				RunProgram(source)
+				return
 			}
 
 			cmd.Help()
