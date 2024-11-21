@@ -501,7 +501,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case errorMsg:
 		m.error = msg.error
 		m.errorViewport.SetContent(msg.error.Error())
-		return m, nil
+		m.loading = false
+		return m, m.stopwatch.Stop()
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
