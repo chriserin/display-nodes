@@ -292,6 +292,12 @@ func NextQueryRunCmd() tea.Msg {
 	return nextQueryRunMsg{}
 }
 
+type latestQueryRunMsg struct{}
+
+func LatestQueryRunCmd() tea.Msg {
+	return latestQueryRunMsg{}
+}
+
 type executeQueryMsg struct {
 	queryRun QueryRun
 }
@@ -362,7 +368,7 @@ func (m Model) Init() tea.Cmd {
 	if m.source.sourceType == SOURCE_STDIN {
 		return nil
 	} else if m.source.sourceType == SOURCE_PGEX {
-		return NextQueryRunCmd
+		return LatestQueryRunCmd
 	} else {
 		return ShowAllCmd
 	}
@@ -497,6 +503,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			UpdateModel(&m, newQueryRun)
 			m.source = Source{sourceType: SOURCE_PGEX, fileName: newQueryRun.pgexPointer}
 		}
+		return m, nil
+	case latestQueryRunMsg:
+		newQueryRun := latestQueryRun()
+		UpdateModel(&m, newQueryRun)
+		m.source = Source{sourceType: SOURCE_PGEX, fileName: newQueryRun.pgexPointer}
 		return m, nil
 	case errorMsg:
 		m.error = msg.error
