@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -48,7 +47,7 @@ func main() {
 			}
 
 			if cliOptions.filename != "" {
-				if err := LoadConfig(); err != nil {
+				if err := LoadSqlConfig(); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
@@ -92,7 +91,7 @@ func main() {
 	rootCmd.Execute()
 }
 
-func LoadConfig() error {
+func LoadSqlConfig() error {
 	if len(cliOptions.configPaths) == 0 {
 		if _, err := os.Stat("./pgex.conf"); err == nil {
 			cliOptions.configPaths = append(cliOptions.configPaths, "./pgex.conf")
@@ -204,8 +203,6 @@ func appendConfigFromFile(path string) error {
 	}
 	return nil
 }
-
-var databaseUrl = "postgres://postgres:postgres@localhost:5432/"
 
 func ExecuteExplain(query string, settings []Setting) (string, error) {
 	pgConn := Connection{
