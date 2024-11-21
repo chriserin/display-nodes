@@ -280,22 +280,27 @@ func RunProgram(source Source) {
 	}
 }
 
-type previousQueryRunMsg struct{}
+type newQueryRunMsg struct{ queryRun QueryRun }
 
-func PreviousQueryRunCmd() tea.Msg {
-	return previousQueryRunMsg{}
+func PreviousQueryRun(queryRun QueryRun) tea.Cmd {
+	return func() tea.Msg {
+		newQueryRun := queryRun.previousQueryRun()
+		return newQueryRunMsg{queryRun: newQueryRun}
+	}
 }
 
-type nextQueryRunMsg struct{}
-
-func NextQueryRunCmd() tea.Msg {
-	return nextQueryRunMsg{}
+func NextQueryRun(queryRun QueryRun) tea.Cmd {
+	return func() tea.Msg {
+		newQueryRun := queryRun.nextQueryRun()
+		return newQueryRunMsg{queryRun: newQueryRun}
+	}
 }
 
-type latestQueryRunMsg struct{}
-
-func LatestQueryRunCmd() tea.Msg {
-	return latestQueryRunMsg{}
+func LatestQueryRun() tea.Cmd {
+	return func() tea.Msg {
+		newQueryRun := latestQueryRun()
+		return newQueryRunMsg{queryRun: newQueryRun}
+	}
 }
 
 type executeQueryMsg struct {
@@ -368,7 +373,7 @@ func (m Model) Init() tea.Cmd {
 	if m.source.sourceType == SOURCE_STDIN {
 		return nil
 	} else if m.source.sourceType == SOURCE_PGEX {
-		return LatestQueryRunCmd
+		return LatestQueryRun()
 	} else {
 		return ShowAllCmd
 	}
@@ -459,9 +464,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.stopwatch = stopwatch.NewWithInterval(time.Millisecond * 100)
 			return m, tea.Batch(m.stopwatch.Init(), m.spinner.Tick, ExecuteQueryCmd(m.originalSource.fileName, m.nextRunSettings))
 		case key.Matches(msg, m.keys.PrevQueryRun):
-			return m, PreviousQueryRunCmd
+			return m, PreviousQueryRun(m.queryRun)
 		case key.Matches(msg, m.keys.NextQueryRun):
-			return m, NextQueryRunCmd
+			return m, NextQueryRun(m.queryRun)
 		case key.Matches(msg, m.keys.SqlUp):
 			m.sqlViewport.LineUp(1)
 		case key.Matches(msg, m.keys.SqlDown):
@@ -490,24 +495,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		UpdateModel(&m, msg.queryRun)
 		m.loading = false
 		return m, tea.Batch(m.stopwatch.Stop(), m.stopwatch.Reset())
-	case previousQueryRunMsg:
-		newQueryRun := m.queryRun.previousQueryRun()
+	case newQueryRunMsg:
+		newQueryRun := msg.queryRun
 		if newQueryRun.pgexPointer != m.queryRun.pgexPointer {
 			UpdateModel(&m, newQueryRun)
 			m.source = Source{sourceType: SOURCE_PGEX, fileName: newQueryRun.pgexPointer}
 		}
-		return m, nil
-	case nextQueryRunMsg:
-		newQueryRun := m.queryRun.nextQueryRun()
-		if newQueryRun.pgexPointer != m.queryRun.pgexPointer {
-			UpdateModel(&m, newQueryRun)
-			m.source = Source{sourceType: SOURCE_PGEX, fileName: newQueryRun.pgexPointer}
-		}
-		return m, nil
-	case latestQueryRunMsg:
-		newQueryRun := latestQueryRun()
-		UpdateModel(&m, newQueryRun)
-		m.source = Source{sourceType: SOURCE_PGEX, fileName: newQueryRun.pgexPointer}
 		return m, nil
 	case errorMsg:
 		m.error = msg.error
