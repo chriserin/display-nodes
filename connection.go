@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"slices"
 
 	pgx "github.com/jackc/pgx/v5"
@@ -46,12 +44,11 @@ func (c Connection) Close() {
 
 var allowedSettings = []string{"work_mem", "join_collapse_limit", "max_parallel_workers_per_gather", "random_page_cost", "effective_cache_size"}
 
-func (c Connection) ShowAll() []Setting {
+func (c Connection) ShowAll() ([]Setting, error) {
 	rows, err := c.conn.Query(context.Background(), "show all")
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Show all failed: %v\n", err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	result := make([]Setting, 0, len(allowedSettings))
@@ -63,5 +60,5 @@ func (c Connection) ShowAll() []Setting {
 		}
 	}
 
-	return result
+	return result, nil
 }

@@ -284,21 +284,30 @@ type newQueryRunMsg struct{ queryRun QueryRun }
 
 func PreviousQueryRun(queryRun QueryRun) tea.Cmd {
 	return func() tea.Msg {
-		newQueryRun := queryRun.previousQueryRun()
+		newQueryRun, err := queryRun.previousQueryRun()
+		if err != nil {
+			return errorMsg{error: err}
+		}
 		return newQueryRunMsg{queryRun: newQueryRun}
 	}
 }
 
 func NextQueryRun(queryRun QueryRun) tea.Cmd {
 	return func() tea.Msg {
-		newQueryRun := queryRun.nextQueryRun()
+		newQueryRun, err := queryRun.nextQueryRun()
+		if err != nil {
+			return errorMsg{error: err}
+		}
 		return newQueryRunMsg{queryRun: newQueryRun}
 	}
 }
 
 func LatestQueryRun() tea.Cmd {
 	return func() tea.Msg {
-		newQueryRun := latestQueryRun()
+		newQueryRun, err := latestQueryRun()
+		if err != nil {
+			return errorMsg{error: err}
+		}
 		return newQueryRunMsg{queryRun: newQueryRun}
 	}
 }
@@ -366,7 +375,7 @@ func ShowAll() ([]Setting, error) {
 		return nil, err
 	}
 	defer pgConn.Close()
-	return pgConn.ShowAll(), nil
+	return pgConn.ShowAll()
 }
 
 func (m Model) Init() tea.Cmd {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"example/display-nodes/sqlsplit"
 	"fmt"
 	"log"
@@ -34,7 +35,7 @@ func CreatePgexDir() string {
 	return dirPath
 }
 
-func (q QueryRun) previousQueryRun() QueryRun {
+func (q QueryRun) previousQueryRun() (QueryRun, error) {
 	pgexFiles := getQueryRunEntries()
 	var currentIndex int
 	for i, pgexFile := range pgexFiles {
@@ -46,11 +47,11 @@ func (q QueryRun) previousQueryRun() QueryRun {
 	if currentIndex-1 >= 0 {
 		return loadQueryRun(pgexFiles[currentIndex-1])
 	} else {
-		return q
+		return q, nil
 	}
 }
 
-func (q QueryRun) nextQueryRun() QueryRun {
+func (q QueryRun) nextQueryRun() (QueryRun, error) {
 	pgexFiles := getQueryRunEntries()
 	var currentIndex int
 	for i, pgexFile := range pgexFiles {
@@ -62,28 +63,28 @@ func (q QueryRun) nextQueryRun() QueryRun {
 	if currentIndex+1 < len(pgexFiles) {
 		return loadQueryRun(pgexFiles[currentIndex+1])
 	} else {
-		return q
+		return q, nil
 	}
 }
 
-func latestQueryRun() QueryRun {
+func latestQueryRun() (QueryRun, error) {
 	pgexFiles := getQueryRunEntries()
 	return loadQueryRun(pgexFiles[len(pgexFiles)-1])
 }
 
-func loadQueryRun(pgexFile string) QueryRun {
+func loadQueryRun(pgexFile string) (QueryRun, error) {
 	body, err := os.ReadFile(pgexFile)
 	if err != nil {
-		log.Fatal(err)
+		return QueryRun{}, err
 	}
 
 	contents := string(body)
 	if !strings.Contains(contents, sqlDivider) {
-		panic("wrong pgex format no settings above divider")
+		return QueryRun{}, errors.New("Wrong pgex format: no settings-above divider")
 	}
 
 	if !strings.Contains(contents, explainDivider) {
-		panic("wrong pgex format no sql above divider")
+		return QueryRun{}, errors.New("Wrong pgex format: no sql-above divider")
 	}
 
 	settingsAbove := strings.Split(contents, sqlDivider)
@@ -106,7 +107,7 @@ func loadQueryRun(pgexFile string) QueryRun {
 
 	_, file := path.Split(pgexFile)
 
-	return QueryRun{query: sql, result: plan, pgexPointer: file, settings: settings}
+	return QueryRun{query: sql, result: plan, pgexPointer: file, settings: settings}, nil
 }
 
 func getQueryRunEntries() []string {
