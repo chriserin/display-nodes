@@ -363,6 +363,7 @@ func ShowAllCmd() tea.Msg {
 	if err != nil {
 		return errorMsg{error: err}
 	}
+	slices.SortFunc(settings, SettingCompare)
 	return showAllMsg{settings: settings}
 }
 
@@ -490,9 +491,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Println(msg)
 		}
 	case showAllMsg:
-		settings := msg.settings
-		slices.SortFunc(settings, SettingCompare)
-		m.nextRunSettings = settings
+		m.nextRunSettings = msg.settings
 		m.loading = true
 		return m, tea.Batch(m.spinner.Tick, ExecuteExplainQueryCmd(m.source.fileName, m.nextRunSettings))
 	case executeExplainQueryMsg:
