@@ -28,6 +28,7 @@ type ParseContext struct {
 	BelowGather      bool
 	ParentNestedLoop bool
 	Analyzed         bool
+	HasBuffers       bool
 }
 
 func Convert(explainJson string) ExplainPlan {
@@ -35,10 +36,12 @@ func Convert(explainJson string) ExplainPlan {
 	nodes := make([]PlanNode, 0, 1)
 	id := 0
 
+	_, hasBuffers := decoded["Shared Read Blocks"]
+
 	extractPlanNodes(decoded,
 		Position{Id: 0, Level: 0, Parent: 0},
 		Position{Id: 0, Level: 0, Parent: 0},
-		ParseContext{Id: &id, Nodes: &nodes, Analyzed: analyzed},
+		ParseContext{Id: &id, Nodes: &nodes, Analyzed: analyzed, HasBuffers: hasBuffers},
 	)
 
 	return ExplainPlan{
@@ -126,10 +129,6 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 
 	planWidth := plan["Plan Width"].(float64)
 
-	actualLoops, ok := plan["Actual Loops"].(float64)
-	tempReadBlocks, ok := plan["Temp Read Blocks"].(float64)
-	tempWriteBlocks, ok := plan["Temp Write Blocks"].(float64)
-
 	parentRelationship, ok := plan["Parent Relationship"].(string)
 	if !ok {
 		parentRelationship = ""
@@ -198,11 +197,10 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 
 	if parseContext.Analyzed {
 		actualRows := plan["Actual Rows"].(float64)
-		sharedReadBlocks := plan["Shared Read Blocks"].(float64)
-		sharedHitBlocks := plan["Shared Hit Blocks"].(float64)
 		startupTime := plan["Actual Startup Time"].(float64)
 		totalTime := plan["Actual Total Time"].(float64)
 		workersLaunched, _ := plan["Workers Launched"].(float64)
+		actualLoops := plan["Actual Loops"].(float64)
 
 		var workersLaunchedInt int
 		if isGather {
@@ -212,15 +210,22 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 		}
 
 		analyzed := Analyzed{
-			LaunchedWorkers:   workersLaunchedInt,
-			SharedBuffersHit:  int(sharedHitBlocks),
-			SharedBuffersRead: int(sharedReadBlocks),
-			StartupTime:       startupTime,
-			TotalTime:         totalTime,
-			ActualLoops:       int(actualLoops),
-			TempReadBlocks:    int(tempReadBlocks),
-			TempWriteBlocks:   int(tempWriteBlocks),
-			ActualRows:        int(actualRows),
+			LaunchedWorkers: workersLaunchedInt,
+			StartupTime:     startupTime,
+			TotalTime:       totalTime,
+			ActualLoops:     int(actualLoops),
+			ActualRows:      int(actualRows),
+		}
+
+		if parseContext.HasBuffers {
+			tempReadBlocks := plan["Temp Read Blocks"].(float64)
+			tempWriteBlocks := plan["Temp Write Blocks"].(float64)
+			sharedReadBlocks := plan["Shared Read Blocks"].(float64)
+			sharedHitBlocks := plan["Shared Hit Blocks"].(float64)
+			analyzed.TempReadBlocks = int(tempReadBlocks)
+			analyzed.TempWriteBlocks = int(tempWriteBlocks)
+			analyzed.SharedBuffersHit = int(sharedHitBlocks)
+			analyzed.SharedBuffersRead = int(sharedReadBlocks)
 		}
 
 		extractedNode.Analyzed = analyzed
@@ -236,6 +241,7 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 		BelowGather:      isGather || parseContext.BelowGather,
 		ParentNestedLoop: nodeType == "Nested Loop",
 		Analyzed:         parseContext.Analyzed,
+		HasBuffers:       parseContext.HasBuffers,
 	}
 
 	if plans != nil {
