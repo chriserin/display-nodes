@@ -166,7 +166,7 @@ func CursorStyle(style Styles) Styles {
 	background := lipgloss.Color("#222277")
 
 	return Styles{
-		Gutter:     style.Gutter.Foreground(lipgloss.Color("#ff966c")),
+		Gutter:     style.Gutter.Foreground(lipgloss.Color("#ff966c")).Background(background),
 		NodeName:   style.NodeName.Background(background),
 		Everything: style.Everything.Background(background),
 		Relation:   style.Relation.Background(background),
@@ -182,7 +182,7 @@ func ChildCursorStyle(style Styles) Styles {
 	background := lipgloss.Color("#2f334d")
 
 	return Styles{
-		Gutter:     style.Gutter,
+		Gutter:     style.Gutter.Background(background),
 		NodeName:   style.NodeName.Background(background),
 		Everything: style.Everything.Background(background),
 		Relation:   style.Relation.Background(background),

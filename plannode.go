@@ -80,10 +80,14 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 	if ctx.DisplayParallel {
 		if viewPosition.BelowGather {
 			buf.WriteString(styles.Gutter.Render("┃┃ "))
-		} else if node.Analyzed.LaunchedWorkers > 0 {
-			buf.WriteString(styles.Workers.Render(fmt.Sprintf("%.2d ", node.Analyzed.LaunchedWorkers)))
+		} else if node.IsGather {
+			if node.Analyzed.LaunchedWorkers > 0 {
+				buf.WriteString(styles.Workers.Render(fmt.Sprintf("%.2d ", node.Analyzed.LaunchedWorkers)))
+			} else {
+				buf.WriteString(styles.Workers.Render(" - "))
+			}
 		} else {
-			buf.WriteString("   ")
+			buf.WriteString(styles.Everything.Render("   "))
 		}
 	}
 
