@@ -48,5 +48,5 @@ func TestStdinNoBuffers(t *testing.T) {
 	assert.Contains(t, rendered[ROW_HEADER], "STDIN")
 	assert.Contains(t, rendered[ROW_STATUS], "Time: 69.662ms")
 	assert.Contains(t, rendered[ROW_EX_NODE_1], "Finalize Aggregate")
-	assert.Contains(t, rendered[ROW_DETAILS_TITLE], "Details")
+	assert.Contains(t, rendered[ROW_DETAILS_TITLE], "Details  Finalize Aggregate")
 }

@@ -266,7 +266,7 @@ func RunProgram(source Source, teaOpts ...tea.ProgramOption) *tea.Program {
 	if source.sourceType == SOURCE_STDIN {
 		explainPlan := Convert(source.input)
 		model.UpdateModel(explainPlan)
-		model.ctx.ResetContext(explainPlan)
+		model.ctx.ResetContext(explainPlan, model)
 	}
 
 	program := tea.NewProgram(
@@ -544,7 +544,7 @@ func UpdateModel(m *Model, queryRun QueryRun) {
 	m.queryRun = queryRun
 	explainPlan := Convert(queryRun.result)
 	m.UpdateModel(explainPlan)
-	m.ctx.ResetContext(explainPlan)
+	m.ctx.ResetContext(explainPlan, *m)
 	m.ctx.SelectedNode = m.DisplayNodes[0]
 	m.sqlViewport.SetContent(ansi.Wordwrap(queryRun.query, m.ctx.Width-6, ""))
 	m.settingsViewport.subtitle = SettingsSubtitle(m.ctx)

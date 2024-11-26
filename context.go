@@ -100,9 +100,10 @@ func InitProgramContext() ProgramContext {
 	}
 }
 
-func (ctx *ProgramContext) ResetContext(explainPlan ExplainPlan) {
+func (ctx *ProgramContext) ResetContext(explainPlan ExplainPlan, model Model) {
 	ctx.Cursor = 0
 	ctx.SettingsCursor = 0
+	ctx.SelectedNode = model.DisplayNodes[ctx.SettingsCursor]
 	ctx.Analyzed = explainPlan.analyzed
 }
 
