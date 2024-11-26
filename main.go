@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	sprig "github.com/Masterminds/sprig/v3"
+	tea "github.com/charmbracelet/bubbletea"
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/spf13/cobra"
 	ini "github.com/vaughan0/go-ini"
@@ -31,6 +32,8 @@ var ConnConfig pgx.ConnConfig
 var PGEnvvars map[string]string = make(map[string]string)
 var ConnString string
 
+var zeroSourcetype SourceType
+
 func main() {
 	var rootCmd = &cobra.Command{
 		Use:   "pg_explain",
@@ -38,28 +41,29 @@ func main() {
 		Long:  `read explain in json format from stdin`,
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
+			var source Source
+
 			stat, _ := os.Stdin.Stat()
 			if (stat.Mode() & os.ModeCharDevice) == 0 {
 				input, _ := io.ReadAll(os.Stdin)
-				source := Source{sourceType: SOURCE_STDIN, input: string(input)}
-				RunProgram(source)
-				return
-			}
-
-			if cliOptions.filename != "" {
+				source = Source{sourceType: SOURCE_STDIN, input: string(input)}
+			} else if cliOptions.filename != "" {
 				if err := LoadSqlConfig(); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
-				source := Source{sourceType: SOURCE_FILE, fileName: cliOptions.filename}
-				RunProgram(source)
-				return
+				source = Source{sourceType: SOURCE_FILE, fileName: cliOptions.filename}
+			} else if cliOptions.filename == "" {
+				source = Source{sourceType: SOURCE_PGEX}
 			}
 
-			if cliOptions.filename == "" {
-				source := Source{sourceType: SOURCE_PGEX}
-				RunProgram(source)
-				return
+			if source.sourceType != zeroSourcetype {
+				if _, err := RunProgram(source, tea.WithAltScreen()).Run(); err != nil {
+					fmt.Println("Error running program:", err)
+					os.Exit(1)
+				} else {
+					return
+				}
 			}
 
 			cmd.Help()

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"path"
 	"slices"
 	"strings"
@@ -234,7 +233,8 @@ func (m *Model) setSqlViewHeight() {
 type SourceType int
 
 const (
-	SOURCE_STDIN SourceType = iota
+	SOURCE_ZERO SourceType = iota
+	SOURCE_STDIN
 	SOURCE_FILE
 	SOURCE_PGEX
 )
@@ -260,7 +260,7 @@ func (s Source) View(ctx ProgramContext) string {
 	}
 }
 
-func RunProgram(source Source) {
+func RunProgram(source Source, teaOpts ...tea.ProgramOption) *tea.Program {
 	model := InitModel(source)
 
 	if source.sourceType == SOURCE_STDIN {
@@ -271,13 +271,10 @@ func RunProgram(source Source) {
 
 	program := tea.NewProgram(
 		model,
-		tea.WithAltScreen(),
+		teaOpts...,
 	)
 
-	if _, err := program.Run(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
-	}
+	return program
 }
 
 type newQueryRunMsg struct{ queryRun QueryRun }
