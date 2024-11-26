@@ -219,7 +219,7 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 
 		if parseContext.HasBuffers {
 			tempReadBlocks := plan["Temp Read Blocks"].(float64)
-			tempWriteBlocks := plan["Temp Write Blocks"].(float64)
+			tempWriteBlocks := plan["Temp Written Blocks"].(float64)
 			sharedReadBlocks := plan["Shared Read Blocks"].(float64)
 			sharedHitBlocks := plan["Shared Hit Blocks"].(float64)
 			analyzed.TempReadBlocks = int(tempReadBlocks)
