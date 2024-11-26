@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/acarl005/stripansi"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,7 +22,7 @@ const (
 	ROW_DETAILS_TITLE
 )
 
-func TestStdinNoBuffers(t *testing.T) {
+func TestStdinSource(t *testing.T) {
 
 	var buf bytes.Buffer
 
@@ -45,8 +46,8 @@ func TestStdinNoBuffers(t *testing.T) {
 
 	rendered := strings.Split(buf.String(), "\n")
 
-	assert.Contains(t, rendered[ROW_HEADER], "STDIN")
-	assert.Contains(t, rendered[ROW_STATUS], "Time: 69.662ms")
-	assert.Contains(t, rendered[ROW_EX_NODE_1], "Finalize Aggregate")
-	assert.Contains(t, rendered[ROW_DETAILS_TITLE], "Details  Finalize Aggregate")
+	assert.Contains(t, stripansi.Strip(rendered[ROW_HEADER]), "STDIN")
+	assert.Contains(t, stripansi.Strip(rendered[ROW_STATUS]), "Time: 69.662ms")
+	assert.Contains(t, stripansi.Strip(rendered[ROW_EX_NODE_1]), "Finalize Aggregate")
+	assert.Contains(t, stripansi.Strip(rendered[ROW_DETAILS_TITLE]), "Details  Finalize Aggregate")
 }
