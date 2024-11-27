@@ -171,40 +171,48 @@ var keys = keyMap{
 }
 
 type Model struct {
-	keys             keyMap
-	help             help.Model
-	nodes            []PlanNode
-	ctx              ProgramContext
-	DisplayNodes     []PlanNode
-	StatusLine       StatusLine
-	detailsViewport  Section
-	sqlViewport      Section
-	settingsViewport Section
-	source           Source
-	originalSource   Source
-	queryRun         QueryRun
-	spinner          spinner.Model
-	stopwatch        stopwatch.Model
-	sqlChannel       chan QueryRun
-	loading          bool
-	pgexPointer      string
-	nextRunSettings  []Setting
-	error            error
-	errorViewport    Section
+	keys                 keyMap
+	help                 help.Model
+	nodes                []PlanNode
+	ctx                  ProgramContext
+	DisplayNodes         []PlanNode
+	StatusLine           StatusLine
+	detailsViewport      Section
+	sqlViewport          Section
+	thisSettingsViewport Section
+	nextSettingsViewport Section
+	source               Source
+	originalSource       Source
+	queryRun             QueryRun
+	spinner              spinner.Model
+	stopwatch            stopwatch.Model
+	sqlChannel           chan QueryRun
+	loading              bool
+	pgexPointer          string
+	nextRunSettings      []Setting
+	error                error
+	errorViewport        Section
 }
 
 func InitModel(source Source) Model {
+	ctx := InitProgramContext()
+	nextRunSettings := NewSection("Settings", 80, 7)
+	thisRunSettings := NewSection("Settings", 80, 7)
+	nextRunSettings.subtitle = ctx.SettingsStyles.SelectedSettingsType.Render(" Next Run ")
+	thisRunSettings.subtitle = ctx.SettingsStyles.SelectedSettingsType.Render(" This Run ")
+
 	return Model{
-		ctx:              InitProgramContext(),
-		keys:             keys,
-		help:             help.New(),
-		detailsViewport:  NewSection("Details", 80, 10),
-		sqlViewport:      NewSection("SQL", 80, 10),
-		settingsViewport: NewSection("Settings", 80, 7),
-		source:           source,
-		originalSource:   source,
-		spinner:          initialSpinner(),
-		errorViewport:    NewSection("!Error!", 80, 7),
+		ctx:                  ctx,
+		keys:                 keys,
+		help:                 help.New(),
+		detailsViewport:      NewSection("Details", 80, 10),
+		sqlViewport:          NewSection("SQL", 80, 10),
+		nextSettingsViewport: nextRunSettings,
+		thisSettingsViewport: thisRunSettings,
+		source:               source,
+		originalSource:       source,
+		spinner:              initialSpinner(),
+		errorViewport:        NewSection("!Error!", 80, 7),
 	}
 }
 
@@ -321,7 +329,9 @@ func ExecuteQueryCmd(fileName string, settings []Setting) tea.Cmd {
 	return func() tea.Msg {
 		queryRun := NewQueryRun(fileName)
 		queryWithExplain := queryRun.WithExplainAnalyze()
-		queryRun.settings = settings
+		var queryRunSettings = make([]Setting, 5, 5)
+		copy(queryRunSettings, settings)
+		queryRun.settings = queryRunSettings
 		result, err := ExecuteExplain(queryWithExplain, settings)
 		if err != nil {
 			return errorMsg{error: err}
@@ -341,7 +351,9 @@ func ExecuteExplainQueryCmd(fileName string, settings []Setting) tea.Cmd {
 	return func() tea.Msg {
 		queryRun := NewQueryRun(fileName)
 		queryWithExplain := queryRun.WithExplain()
-		queryRun.settings = settings
+		var queryRunSettings = make([]Setting, 5, 5)
+		copy(queryRunSettings, settings)
+		queryRun.settings = queryRunSettings
 		result, err := ExecuteExplain(queryWithExplain, settings)
 		if err != nil {
 			return errorMsg{error: err}
@@ -409,18 +421,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.ctx.SettingsCursor-1 >= 0 {
 				m.ctx.SettingsCursor = m.ctx.SettingsCursor - 1
 			}
-			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
 		case key.Matches(msg, m.keys.SettingsDown):
 			if m.ctx.SettingsCursor+1 < len(m.nextRunSettings) {
 				m.ctx.SettingsCursor = m.ctx.SettingsCursor + 1
 			}
-			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
-		case key.Matches(msg, m.keys.ToggleSettingsType):
-			m.ctx.DisplayNextSettings = !m.ctx.DisplayNextSettings
-			m.settingsViewport.subtitle = SettingsSubtitle(m.ctx)
-			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
-		case key.Matches(msg, m.keys.ToggleSettings):
-			m.ctx.DisplaySettings = !m.ctx.DisplaySettings
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
 		case key.Matches(msg, m.keys.JoinView):
@@ -480,10 +484,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.sqlViewport.LineDown(1)
 		case key.Matches(msg, m.keys.SettingIncrement):
 			m.nextRunSettings[m.ctx.SettingsCursor].IncrementSetting()
-			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
 		case key.Matches(msg, m.keys.SettingDecrement):
 			m.nextRunSettings[m.ctx.SettingsCursor].DecrementSetting()
-			m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
 		default:
 			return m, tea.Println(msg)
 		}
@@ -533,8 +535,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.Height = msg.Height
 		m.setSqlViewHeight()
 		m.detailsViewport.SetDimensions(m.ctx.Width-1, 10)
-		m.settingsViewport.SetDimensions(m.ctx.Width-1, 7)
-		m.settingsViewport.SetContent(SettingsView(m.queryRun.settings, m.nextRunSettings, m.ctx))
+		m.thisSettingsViewport.SetDimensions((m.ctx.Width-1)/2, 7)
+		m.nextSettingsViewport.SetDimensions((m.ctx.Width-1)/2, 7)
 	}
 
 	return m, nil
@@ -547,8 +549,6 @@ func UpdateModel(m *Model, queryRun QueryRun) {
 	m.ctx.ResetContext(explainPlan, *m)
 	m.ctx.SelectedNode = m.DisplayNodes[0]
 	m.sqlViewport.SetContent(ansi.Wordwrap(queryRun.query, m.ctx.Width-6, ""))
-	m.settingsViewport.subtitle = SettingsSubtitle(m.ctx)
-	m.settingsViewport.SetContent(SettingsView(queryRun.settings, m.nextRunSettings, m.ctx))
 }
 
 func prevStatDisplay(ctx ProgramContext) StatView {
@@ -624,23 +624,24 @@ func (m Model) View() string {
 	}
 
 	buf.WriteString("\n")
-	if !m.help.ShowAll {
-		if m.error != nil {
-			buf.WriteString(m.errorViewport.View())
-		} else if m.ctx.DisplaySql {
-			buf.WriteString(m.sqlViewport.View())
-		} else {
+	if m.error != nil {
+		buf.WriteString(m.errorViewport.View())
+	} else if m.ctx.DisplaySql {
+		buf.WriteString(m.sqlViewport.View())
+	} else {
+		if !m.help.ShowAll {
 			m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
 			m.detailsViewport.subtitle = m.ctx.NormalStyle.NodeName.Render(m.ctx.SelectedNode.name())
 			buf.WriteString(m.detailsViewport.View())
+			buf.WriteString("\n")
+			if slices.Contains([]SourceType{SOURCE_PGEX, SOURCE_FILE}, m.source.sourceType) {
+				m.thisSettingsViewport.SetContent(SettingsView(m.queryRun.settings, m.ctx, false))
+				m.nextSettingsViewport.SetContent(SettingsView(m.nextRunSettings, m.ctx, true))
+				buf.WriteString(lipgloss.JoinHorizontal(1, m.thisSettingsViewport.View(), " ", m.nextSettingsViewport.View()))
+			}
 		}
-		buf.WriteString("\n")
 	}
-
-	if m.ctx.DisplaySettings {
-		buf.WriteString(m.settingsViewport.View())
-		buf.WriteString("\n")
-	}
+	buf.WriteString("\n")
 
 	buf.WriteString(m.help.View(m.keys))
 
@@ -673,19 +674,12 @@ func SettingsSubtitle(ctx ProgramContext) string {
 	return settingsIndicator
 }
 
-func SettingsView(settings []Setting, nextSettings []Setting, ctx ProgramContext) string {
+func SettingsView(settings []Setting, ctx ProgramContext, nextSettings bool) string {
 	var buf strings.Builder
 
-	var currentDisplaySettings []Setting
-	if ctx.DisplayNextSettings {
-		currentDisplaySettings = nextSettings
-	} else {
-		currentDisplaySettings = settings
-	}
-
-	for i, setting := range currentDisplaySettings {
-		if i == ctx.SettingsCursor && ctx.DisplayNextSettings {
-			buf.WriteString(ctx.SettingsStyles.Cursor.Render(setting.View()))
+	for i, setting := range settings {
+		if i == ctx.SettingsCursor && nextSettings {
+			buf.WriteString(ctx.SettingsStyles.SelectedSettingsType.Render(setting.View()))
 		} else {
 			buf.WriteString(ctx.NormalStyle.Everything.Render(setting.View()))
 		}
