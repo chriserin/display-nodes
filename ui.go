@@ -58,7 +58,8 @@ func (k keyMap) ShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.SettingsUp, k.SettingsDown, k.ToggleSettingsType, k.ToggleSettings, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes, k.NextStatDisplay, k.PrevStatDisplay, k.ToggleParallel, k.ToggleNumbers, k.ToggleDisplaySql, k.SqlUp, k.SqlDown, k.SettingIncrement, k.SettingDecrement}, // first column
+		{k.Up, k.Down, k.ToggleParallel, k.ToggleNumbers, k.ReExecute, k.NextStatDisplay, k.PrevStatDisplay, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes}, // first column
+		{k.SettingsUp, k.SettingsDown, k.SettingIncrement, k.SettingDecrement, k.ToggleDisplaySql, k.SqlUp, k.SqlDown},
 		{k.Help, k.Quit}, // second column
 	}
 }
@@ -66,31 +67,31 @@ func (k keyMap) FullHelp() [][]key.Binding {
 var keys = keyMap{
 	IndentToggle: key.NewBinding(
 		key.WithKeys("I"),
-		key.WithHelp("I", "indent toggle"),
+		key.WithHelp("I", "Indent toggle"),
 	),
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
-		key.WithHelp("↑/k", "move up"),
+		key.WithHelp("↑/k", "Move up"),
 	),
 	Down: key.NewBinding(
 		key.WithKeys("down", "j"),
-		key.WithHelp("↓/j", "move down"),
+		key.WithHelp("↓/j", "Move down"),
 	),
 	SettingsUp: key.NewBinding(
 		key.WithKeys("ctrl+k"),
-		key.WithHelp("ctrl+k", "settings up"),
+		key.WithHelp("ctrl+k", "Settings up"),
 	),
 	SettingsDown: key.NewBinding(
 		key.WithKeys("ctrl+j"),
-		key.WithHelp("ctrl+j", "settings down"),
+		key.WithHelp("ctrl+j", "Settings down"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),
-		key.WithHelp("?", "toggle help"),
+		key.WithHelp("?", "Toggle help"),
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("q", "esc", "ctrl+c"),
-		key.WithHelp("q", "quit"),
+		key.WithHelp("q", "Quit"),
 	),
 	JoinView: key.NewBinding(
 		key.WithKeys("J"),
