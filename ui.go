@@ -54,13 +54,17 @@ func (k keyMap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Help, k.Quit}
 }
 
+func (k keyMap) SqlShortHelp() []key.Binding {
+	return []key.Binding{k.ToggleDisplaySql, k.SqlUp, k.SqlDown}
+}
+
 // FullHelp returns keybindings for the expanded help view. It's part of the
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.ToggleParallel, k.ToggleNumbers, k.ReExecute, k.NextStatDisplay, k.PrevStatDisplay, k.IndentToggle, k.ToggleRows, k.ToggleBuffers, k.ToggleCost, k.ToggleTimes}, // first column
-		{k.PrevQueryRun, k.NextQueryRun, k.SettingsUp, k.SettingsDown, k.SettingIncrement, k.SettingDecrement, k.ToggleDisplaySql, k.SqlUp, k.SqlDown},
-		{k.Help, k.Quit}, // second column
+		{k.Up, k.Down, k.ToggleParallel, k.ToggleNumbers, k.ToggleDisplaySql, k.ReExecute}, // first column
+		{k.NextStatDisplay, k.PrevStatDisplay, k.SettingsUp, k.SettingsDown, k.SettingIncrement, k.SettingDecrement},
+		{k.PrevQueryRun, k.NextQueryRun, k.Help, k.Quit}, // second column
 	}
 }
 
@@ -119,7 +123,7 @@ var keys = keyMap{
 	),
 	PrevStatDisplay: key.NewBinding(
 		key.WithKeys("["),
-		key.WithHelp("[", "Previous Stat Display"),
+		key.WithHelp("[", "Prev Stat Display"),
 	),
 	ToggleParallel: key.NewBinding(
 		key.WithKeys("P"),
@@ -174,6 +178,7 @@ var keys = keyMap{
 type Model struct {
 	keys                 keyMap
 	help                 help.Model
+	sqlHelp              help.Model
 	nodes                []PlanNode
 	ctx                  ProgramContext
 	DisplayNodes         []PlanNode
@@ -201,13 +206,15 @@ func InitModel(source Source) Model {
 	thisRunSettings := NewSection("Settings", 80, 7)
 	nextRunSettings.subtitle = ctx.SettingsStyles.SelectedSettingsType.Render(" Next Run ")
 	thisRunSettings.subtitle = ctx.SettingsStyles.SelectedSettingsType.Render(" This Run ")
+	sqlViewport := NewSection("SQL", 80, 10)
 
 	return Model{
 		ctx:                  ctx,
 		keys:                 keys,
 		help:                 help.New(),
+		sqlHelp:              help.New(),
 		detailsViewport:      NewSection("Details", 80, 10),
-		sqlViewport:          NewSection("SQL", 80, 10),
+		sqlViewport:          sqlViewport,
 		nextSettingsViewport: nextRunSettings,
 		thisSettingsViewport: thisRunSettings,
 		source:               source,
@@ -549,7 +556,8 @@ func UpdateModel(m *Model, queryRun QueryRun) {
 	m.UpdateModel(explainPlan)
 	m.ctx.ResetContext(explainPlan, *m)
 	m.ctx.SelectedNode = m.DisplayNodes[0]
-	m.sqlViewport.SetContent(ansi.Wordwrap(queryRun.query, m.ctx.Width-6, ""))
+	wrappedSql := ansi.Wordwrap(queryRun.query, m.ctx.Width-10, "") + "\n"
+	m.sqlViewport.SetContent(wrappedSql)
 }
 
 func prevStatDisplay(ctx ProgramContext) StatView {
@@ -629,22 +637,22 @@ func (m Model) View() string {
 		buf.WriteString(m.errorViewport.View())
 	} else if m.ctx.DisplaySql {
 		buf.WriteString(m.sqlViewport.View())
+		buf.WriteString("\n")
+		buf.WriteString(m.sqlHelp.ShortHelpView(keys.SqlShortHelp()))
 	} else {
-		if !m.help.ShowAll {
-			m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
-			m.detailsViewport.subtitle = m.ctx.NormalStyle.NodeName.Render(m.ctx.SelectedNode.name())
-			buf.WriteString(m.detailsViewport.View())
-			buf.WriteString("\n")
-			if slices.Contains([]SourceType{SOURCE_PGEX, SOURCE_FILE}, m.source.sourceType) {
-				m.thisSettingsViewport.SetContent(SettingsView(m.queryRun.settings, m.ctx, false))
-				m.nextSettingsViewport.SetContent(SettingsView(m.nextRunSettings, m.ctx, true))
-				buf.WriteString(lipgloss.JoinHorizontal(1, m.thisSettingsViewport.View(), " ", m.nextSettingsViewport.View()))
-			}
+		m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
+		m.detailsViewport.subtitle = m.ctx.NormalStyle.NodeName.Render(m.ctx.SelectedNode.name())
+		buf.WriteString(m.detailsViewport.View())
+		buf.WriteString("\n")
+		if slices.Contains([]SourceType{SOURCE_PGEX, SOURCE_FILE}, m.source.sourceType) {
+			m.thisSettingsViewport.SetContent(SettingsView(m.queryRun.settings, m.ctx, false))
+			m.nextSettingsViewport.SetContent(SettingsView(m.nextRunSettings, m.ctx, true))
+			buf.WriteString(lipgloss.JoinHorizontal(1, m.thisSettingsViewport.View(), " ", m.nextSettingsViewport.View()))
 		}
+		buf.WriteString("\n")
+		buf.WriteString(m.help.View(m.keys))
 	}
 	buf.WriteString("\n")
-
-	buf.WriteString(m.help.View(m.keys))
 
 	return buf.String()
 }
