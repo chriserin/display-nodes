@@ -18,7 +18,6 @@ import (
 const VERSION = "0.1.0"
 
 var cliOptions struct {
-	filename    string
 	connString  string
 	host        string
 	port        uint16
@@ -35,10 +34,32 @@ var ConnString string
 var zeroSourcetype SourceType
 
 func main() {
+	var cmdExec = &cobra.Command{
+		Use:   "exec",
+		Short: "Get plan by executing sql",
+		Long:  "Get plan by executing sql",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := LoadSqlConfig(); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			source := Source{sourceType: SOURCE_FILE, fileName: args[0]}
+
+			if _, err := RunProgram(source, tea.WithAltScreen()).Run(); err != nil {
+				fmt.Println("Error running program:", err)
+				os.Exit(1)
+			} else {
+				return
+			}
+		},
+	}
+
 	var rootCmd = &cobra.Command{
 		Use:   "pg_explain",
 		Short: "read explain in json format from stdin",
-		Long:  `read explain in json format from stdin`,
+		Long:  `read explain in json format from stdin or read last pgex file with no inputs`,
 		Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			var source Source
@@ -47,23 +68,15 @@ func main() {
 			if (stat.Mode() & os.ModeCharDevice) == 0 {
 				input, _ := io.ReadAll(os.Stdin)
 				source = Source{sourceType: SOURCE_STDIN, input: string(input)}
-			} else if cliOptions.filename != "" {
-				if err := LoadSqlConfig(); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				source = Source{sourceType: SOURCE_FILE, fileName: cliOptions.filename}
-			} else if cliOptions.filename == "" {
+			} else {
 				source = Source{sourceType: SOURCE_PGEX}
 			}
 
-			if source.sourceType != zeroSourcetype {
-				if _, err := RunProgram(source, tea.WithAltScreen()).Run(); err != nil {
-					fmt.Println("Error running program:", err)
-					os.Exit(1)
-				} else {
-					return
-				}
+			if _, err := RunProgram(source, tea.WithAltScreen()).Run(); err != nil {
+				fmt.Println("Error running program:", err)
+				os.Exit(1)
+			} else {
+				return
 			}
 
 			cmd.Help()
@@ -71,16 +84,14 @@ func main() {
 		},
 	}
 
-	rootCmd.
-		Flags().
-		StringVarP(&cliOptions.filename, "filename", "f", "", "filename of sql file")
+	rootCmd.PersistentFlags().StringVarP(&cliOptions.connString, "conn-string", "", "", "database connection string (https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING)")
+	rootCmd.PersistentFlags().StringVarP(&cliOptions.host, "host", "", "", "database host")
+	rootCmd.PersistentFlags().Uint16VarP(&cliOptions.port, "port", "", 0, "database port")
+	rootCmd.PersistentFlags().StringVarP(&cliOptions.user, "user", "", "", "database user")
+	rootCmd.PersistentFlags().StringVarP(&cliOptions.password, "password", "", "", "database password")
+	rootCmd.PersistentFlags().StringVarP(&cliOptions.database, "database", "", "", "database name")
 
-	rootCmd.Flags().StringVarP(&cliOptions.connString, "conn-string", "", "", "database connection string (https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING)")
-	rootCmd.Flags().StringVarP(&cliOptions.host, "host", "", "", "database host")
-	rootCmd.Flags().Uint16VarP(&cliOptions.port, "port", "", 0, "database port")
-	rootCmd.Flags().StringVarP(&cliOptions.user, "user", "", "", "database user")
-	rootCmd.Flags().StringVarP(&cliOptions.password, "password", "", "", "database password")
-	rootCmd.Flags().StringVarP(&cliOptions.database, "database", "", "", "database name")
+	rootCmd.AddCommand(cmdExec)
 
 	cmdVersion := &cobra.Command{
 		Use:   "version",
