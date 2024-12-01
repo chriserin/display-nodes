@@ -544,7 +544,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.setSqlViewHeight()
 		m.detailsViewport.SetDimensions(m.ctx.Width-1, 10)
 		m.thisSettingsViewport.SetDimensions((m.ctx.Width-1)/2, 7)
-		m.nextSettingsViewport.SetDimensions((m.ctx.Width-1)/2, 7)
+		var nextSettingsWidth int
+		if m.ctx.Width%2 == 1 {
+			nextSettingsWidth = (m.ctx.Width-1)/2 - 1
+		} else {
+			nextSettingsWidth = (m.ctx.Width - 1) / 2
+		}
+		m.nextSettingsViewport.SetDimensions(nextSettingsWidth, 7)
 	}
 
 	return m, nil
