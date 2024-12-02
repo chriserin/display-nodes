@@ -28,15 +28,19 @@ type QueryRun struct {
 
 var defaultPgexDir = "_pgex"
 
-func CreatePgexDir() string {
+func CreatePgexDir() (string, error) {
 	workingDir, _ := os.Getwd()
 	dirPath := filepath.Join(workingDir, defaultPgexDir)
-	os.MkdirAll(dirPath, 0755)
-	return dirPath
+	err := os.MkdirAll(dirPath, 0755)
+	return dirPath, err
 }
 
 func (q QueryRun) previousQueryRun() (QueryRun, error) {
-	pgexFiles := getQueryRunEntries()
+	pgexFiles, err := getQueryRunEntries()
+	if err != nil {
+		return QueryRun{}, err
+	}
+
 	var currentIndex int
 	for i, pgexFile := range pgexFiles {
 		if strings.Contains(pgexFile, q.pgexPointer) {
@@ -52,7 +56,11 @@ func (q QueryRun) previousQueryRun() (QueryRun, error) {
 }
 
 func (q QueryRun) nextQueryRun() (QueryRun, error) {
-	pgexFiles := getQueryRunEntries()
+	pgexFiles, err := getQueryRunEntries()
+	if err != nil {
+		return QueryRun{}, err
+	}
+
 	var currentIndex int
 	for i, pgexFile := range pgexFiles {
 		if strings.Contains(pgexFile, q.pgexPointer) {
@@ -68,7 +76,11 @@ func (q QueryRun) nextQueryRun() (QueryRun, error) {
 }
 
 func latestQueryRun() (QueryRun, error) {
-	pgexFiles := getQueryRunEntries()
+	pgexFiles, err := getQueryRunEntries()
+	if err != nil {
+		return QueryRun{}, err
+	}
+
 	return loadQueryRun(pgexFiles[len(pgexFiles)-1])
 }
 
@@ -110,10 +122,10 @@ func loadQueryRun(pgexFile string) (QueryRun, error) {
 	return QueryRun{query: sql, result: plan, pgexPointer: file, settings: settings}, nil
 }
 
-func getQueryRunEntries() []string {
-	dirEntries, err := os.ReadDir("_pgex/")
+func getQueryRunEntries() ([]string, error) {
+	dirEntries, err := os.ReadDir(defaultPgexDir)
 	if err != nil {
-		log.Fatal(err)
+		return []string{}, errors.New("_pgex dir does not exist, use the exec command to create a .pgex file in a _pgex dir")
 	}
 
 	pgexFiles := make([]string, 0, len(dirEntries))
@@ -121,12 +133,12 @@ func getQueryRunEntries() []string {
 	for _, d := range dirEntries {
 		pgexFile := regexp.MustCompile(`[0-9]{14}_.*\.pgex`)
 		if pgexFile.Match([]byte(d.Name())) {
-			result := filepath.Join(wd, "_pgex/", d.Name())
+			result := filepath.Join(wd, defaultPgexDir, d.Name())
 			pgexFiles = append(pgexFiles, result)
 		}
 	}
 
-	return pgexFiles
+	return pgexFiles, nil
 }
 
 func NewQueryRun(filename string) QueryRun {
@@ -156,13 +168,15 @@ func (q *QueryRun) SetResult(result string) {
 	q.result = result
 }
 
-func (q *QueryRun) WritePgexFile(pgexDir string) {
+func (q *QueryRun) WritePgexFile(pgexDir string) error {
 	fileName := q.pgexFilename()
 	fullFilePath := filepath.Join(pgexDir, fileName)
 	contentBytes := []byte(q.pgexFileContent())
 
-	os.WriteFile(fullFilePath, contentBytes, 0666)
+	err := os.WriteFile(fullFilePath, contentBytes, 0666)
 	q.pgexPointer = fileName
+
+	return err
 }
 
 func (q QueryRun) DisplayName() string {

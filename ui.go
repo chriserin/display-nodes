@@ -345,8 +345,14 @@ func ExecuteQueryCmd(fileName string, settings []Setting) tea.Cmd {
 			return errorMsg{error: err}
 		}
 		queryRun.SetResult(result)
-		pgexDir := CreatePgexDir()
+		pgexDir, err := CreatePgexDir()
+		if err != nil {
+			return errorMsg{error: err}
+		}
 		queryRun.WritePgexFile(pgexDir)
+		if err != nil {
+			return errorMsg{error: err}
+		}
 		return executeQueryMsg{queryRun: queryRun}
 	}
 }
