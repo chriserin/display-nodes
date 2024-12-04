@@ -1,4 +1,4 @@
-module example/display-nodes
+module pg-explain
 
 go 1.23.0
 

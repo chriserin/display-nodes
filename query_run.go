@@ -2,13 +2,13 @@ package main
 
 import (
 	"errors"
-	"example/display-nodes/sqlsplit"
 	"fmt"
 	"log"
 	"os"
 	"os/user"
 	"path"
 	"path/filepath"
+	"pg-explain/sqlsplit"
 	"regexp"
 	"strings"
 	"time"
