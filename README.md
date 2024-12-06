@@ -27,3 +27,7 @@ Show a previously executed plan
 Each time a query is executed `pg_explain` stores the resulting query plan
 along with the relevant settings at time of execution into a `.pgex` file
 stored in a `_pgex` directory in the location where pg_explain was executed.
+
+## Examples
+
+![CleanShot 2024-12-06 at 11 28 18](https://github.com/user-attachments/assets/46dda840-7246-42c4-88ee-250a7c98f1a0)
