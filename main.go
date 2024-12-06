@@ -15,7 +15,7 @@ import (
 	ini "github.com/vaughan0/go-ini"
 )
 
-const VERSION = "0.1.1-beta"
+const VERSION = "0.1.1-beta.2"
 
 var cliOptions struct {
 	connString  string
