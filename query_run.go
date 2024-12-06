@@ -184,6 +184,8 @@ func (q QueryRun) DisplayName() string {
 	return file
 }
 
+var PGEX_DATE_FORMAT = "20060102150405"
+
 func (q QueryRun) pgexFilename() string {
 	user, _ := user.Current()
 	filePath := strings.Replace(q.originalFilename, "~", user.HomeDir, 1)
@@ -191,7 +193,7 @@ func (q QueryRun) pgexFilename() string {
 	_, file := path.Split(filePath)
 	name := strings.Split(file, ".")[0]
 
-	formattedNow := time.Now().Format("20060102150405")
+	formattedNow := time.Now().Format(PGEX_DATE_FORMAT)
 	return fmt.Sprintf("%s_%s%s", formattedNow, name, extension)
 }
 

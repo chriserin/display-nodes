@@ -266,11 +266,25 @@ func (s Source) DisplayName() string {
 	return file
 }
 
+func (s Source) FileDate() string {
+	_, file := path.Split(s.fileName)
+	parts := strings.Split(file, "_")
+	pgex_datetime, err := time.Parse(PGEX_DATE_FORMAT, parts[0])
+	if err != nil {
+		return ""
+	}
+	return pgex_datetime.Format(time.DateTime)
+}
+
+func (s Source) String() string {
+	return fmt.Sprintf("%s %s %s", s.fileName, s.input, s.sourceType)
+}
+
 func (s Source) View(ctx ProgramContext) string {
 	if s.sourceType == SOURCE_FILE {
 		return ctx.StatusStyles.AltNormal.Render(fmt.Sprintf("FILE - %s", s.DisplayName()))
 	} else if s.sourceType == SOURCE_PGEX {
-		return ctx.StatusStyles.AltNormal.Render(fmt.Sprintf("PGEX - %s", s.DisplayName()))
+		return ctx.StatusStyles.AltNormal.Render(fmt.Sprintf("PGEX - %s - %s", s.FileDate(), s.DisplayName()))
 	} else {
 		return "STDIN"
 	}
