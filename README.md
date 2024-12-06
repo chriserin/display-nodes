@@ -36,4 +36,9 @@ Navigate nodes with j and k
 
 Navigate node stats with [ and ]
 
+* Rows
+* Buffers
+* Cost 
+* Time
+
 ![CleanShot 2024-12-06 at 11 33 57](https://github.com/user-attachments/assets/a5826afc-d355-48f3-8f93-685906a0226b)
