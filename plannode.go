@@ -279,7 +279,15 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 	}
 	if ctx.Analyzed {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Actual Loops: "))
-		buf.WriteString(ctx.NormalStyle.Everything.Render(formatUnderscores(node.Analyzed.ActualLoops)))
+		loops := formatUnderscores(node.Analyzed.ActualLoops)
+		buf.WriteString(ctx.NormalStyle.Everything.Render(loops))
+		if node.Analyzed.ActualLoops > 1 {
+			if node.ParentIsNestedLoop {
+				buf.WriteString(fmt.Sprintf(" Loops each returning an avg of %d rows", formatUnderscores(node.Analyzed.ActualRows)))
+			} else {
+				buf.WriteString(fmt.Sprintf(" Parallel workers each processing an avg of %d rows", formatUnderscores(node.Analyzed.ActualRows)))
+			}
+		}
 		buf.WriteString("\n")
 	}
 	if node.RelationName != "" {
