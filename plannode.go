@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
@@ -270,17 +269,17 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 
 	if node.Analyzed.TempReadBlocks > 0 {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Temp Read Blocks: "))
-		buf.WriteString(ctx.DetailStyles.Warning.Render(strconv.Itoa(node.Analyzed.TempReadBlocks)))
+		buf.WriteString(ctx.DetailStyles.Warning.Render(formatUnderscores(node.Analyzed.TempReadBlocks)))
 		buf.WriteString("\n")
 	}
 	if node.Analyzed.TempWriteBlocks > 0 {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Temp Write Blocks: "))
-		buf.WriteString(ctx.DetailStyles.Warning.Render(strconv.Itoa(node.Analyzed.TempWriteBlocks)))
+		buf.WriteString(ctx.DetailStyles.Warning.Render(formatUnderscores(node.Analyzed.TempWriteBlocks)))
 		buf.WriteString("\n")
 	}
 	if ctx.Analyzed {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Actual Loops: "))
-		buf.WriteString(ctx.NormalStyle.Everything.Render(strconv.Itoa(node.Analyzed.ActualLoops)))
+		buf.WriteString(ctx.NormalStyle.Everything.Render(formatUnderscores(node.Analyzed.ActualLoops)))
 		buf.WriteString("\n")
 	}
 	if node.RelationName != "" {
@@ -315,7 +314,7 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 	}
 	if node.PlanWidth > 0 {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Plan Width: "))
-		buf.WriteString(ctx.NormalStyle.Everything.Render(strconv.Itoa(node.PlanWidth)))
+		buf.WriteString(ctx.NormalStyle.Everything.Render(formatUnderscores(node.PlanWidth)))
 		buf.WriteString("\n")
 	}
 
