@@ -276,10 +276,6 @@ func (s Source) FileDate() string {
 	return pgex_datetime.Format(time.DateTime)
 }
 
-func (s Source) String() string {
-	return fmt.Sprintf("%s %s %s", s.fileName, s.input, s.sourceType)
-}
-
 func (s Source) View(ctx ProgramContext) string {
 	if s.sourceType == SOURCE_FILE {
 		return ctx.StatusStyles.AltNormal.Render(fmt.Sprintf("FILE - %s", s.DisplayName()))

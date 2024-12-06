@@ -283,9 +283,9 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 		buf.WriteString(ctx.NormalStyle.Everything.Render(loops))
 		if node.Analyzed.ActualLoops > 1 {
 			if node.ParentIsNestedLoop {
-				buf.WriteString(fmt.Sprintf(" Loops each returning an avg of %d rows", formatUnderscores(node.Analyzed.ActualRows)))
+				buf.WriteString(fmt.Sprintf(" Loops each returning an avg of %s rows", formatUnderscores(node.Analyzed.ActualRows)))
 			} else {
-				buf.WriteString(fmt.Sprintf(" Parallel workers each processing an avg of %d rows", formatUnderscores(node.Analyzed.ActualRows)))
+				buf.WriteString(fmt.Sprintf(" Parallel workers each processing an avg of %s rows", formatUnderscores(node.Analyzed.ActualRows)))
 			}
 		}
 		buf.WriteString("\n")
