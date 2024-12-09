@@ -1,0 +1,83 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Incremental Sort",
+      "Parallel Aware": false,
+      "Async Capable": false,
+      "Startup Cost": 0.47,
+      "Total Cost": 75463.43,
+      "Plan Rows": 1000000,
+      "Plan Width": 8,
+      "Actual Startup Time": 0.071,
+      "Actual Total Time": 163.626,
+      "Actual Rows": 1000000,
+      "Actual Loops": 1,
+      "Sort Key": ["x", "y"],
+      "Presorted Key": ["x"],
+      "Full-sort Groups": {
+        "Group Count": 31250,
+        "Sort Methods Used": ["quicksort"],
+        "Sort Space Memory": {
+          "Average Sort Space Used": 26,
+          "Peak Sort Space Used": 26
+        }
+      },
+      "Shared Hit Blocks": 7,
+      "Shared Read Blocks": 7160,
+      "Shared Dirtied Blocks": 0,
+      "Shared Written Blocks": 0,
+      "Local Hit Blocks": 0,
+      "Local Read Blocks": 0,
+      "Local Dirtied Blocks": 0,
+      "Local Written Blocks": 0,
+      "Temp Read Blocks": 0,
+      "Temp Written Blocks": 0,
+      "Plans": [
+        {
+          "Node Type": "Index Scan",
+          "Parent Relationship": "Outer",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Scan Direction": "Forward",
+          "Index Name": "i_large",
+          "Relation Name": "large",
+          "Alias": "large",
+          "Startup Cost": 0.42,
+          "Total Cost": 30463.42,
+          "Plan Rows": 1000000,
+          "Plan Width": 8,
+          "Actual Startup Time": 0.038,
+          "Actual Total Time": 98.383,
+          "Actual Rows": 1000000,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 0,
+          "Shared Read Blocks": 7160,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        }
+      ]
+    },
+    "Settings": {},
+    "Planning": {
+      "Shared Hit Blocks": 64,
+      "Shared Read Blocks": 0,
+      "Shared Dirtied Blocks": 0,
+      "Shared Written Blocks": 0,
+      "Local Hit Blocks": 0,
+      "Local Read Blocks": 0,
+      "Local Dirtied Blocks": 0,
+      "Local Written Blocks": 0,
+      "Temp Read Blocks": 0,
+      "Temp Written Blocks": 0
+    },
+    "Planning Time": 0.138,
+    "Triggers": [],
+    "Execution Time": 184.493
+  }
+]

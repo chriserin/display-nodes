@@ -114,6 +114,51 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 		filter = ""
 	}
 
+	strategy, ok := plan["Strategy"].(string)
+	if !ok {
+		strategy = ""
+	}
+
+	command, ok := plan["Command"].(string)
+	if !ok {
+		command = ""
+	}
+
+	ctename, ok := plan["CTE Name"].(string)
+	if !ok {
+		ctename = ""
+	}
+
+	functionName, ok := plan["Function Name"].(string)
+	if !ok {
+		functionName = ""
+	}
+
+	tablefunctionname, ok := plan["Table Function Name"].(string)
+	if !ok {
+		tablefunctionname = ""
+	}
+
+	tidcond, ok := plan["TID Cond"].(string)
+	if !ok {
+		tidcond = ""
+	}
+
+	operation, ok := plan["Operation"].(string)
+	if !ok {
+		operation = ""
+	}
+
+	jointype, ok := plan["Join Type"].(string)
+	if !ok {
+		jointype = ""
+	}
+
+	subplanname, ok := plan["Subplan Name"].(string)
+	if !ok {
+		subplanname = ""
+	}
+
 	hashcond, ok := plan["Hash Cond"].(string)
 	if !ok {
 		hashcond = ""
@@ -124,6 +169,22 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 	if ok {
 		for _, gi := range groupkeyI {
 			groupkeys = append(groupkeys, gi.(string))
+		}
+	}
+
+	var sortkeys []string
+	sortkeyI, ok := plan["Sort Key"].([]interface{})
+	if ok {
+		for _, gi := range sortkeyI {
+			sortkeys = append(sortkeys, gi.(string))
+		}
+	}
+
+	var presortedkeys []string
+	presortedkeyI, ok := plan["Presorted Key"].([]interface{})
+	if ok {
+		for _, gi := range presortedkeyI {
+			presortedkeys = append(presortedkeys, gi.(string))
 		}
 	}
 
@@ -190,9 +251,20 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 		Filter:             filter,
 		HashCond:           hashcond,
 		GroupKey:           groupkeys,
+		SortKeys:           sortkeys,
+		PresortKeys:        presortedkeys,
 		ParentRelationship: parentRelationship,
 		ParentIsNestedLoop: parseContext.ParentNestedLoop,
 		PlanWidth:          int(planWidth),
+		Strategy:           strategy,
+		Command:            command,
+		CteName:            ctename,
+		FunctionName:       functionName,
+		TableFunctionName:  tablefunctionname,
+		TidCond:            tidcond,
+		Operation:          operation,
+		JoinType:           jointype,
+		SubPlanName:        subplanname,
 	}
 
 	if parseContext.Analyzed {

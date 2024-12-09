@@ -33,10 +33,22 @@ type PlanNode struct {
 	Filter             string
 	HashCond           string
 	GroupKey           []string
+	SortKeys           []string
+	PresortKeys        []string
 	ParentRelationship string
 	ParentIsNestedLoop bool
 	Analyzed           Analyzed
 	PlanWidth          int
+	Strategy           string
+	Command            string
+	CteName            string
+	Function           string
+	FunctionName       string
+	TableFunctionName  string
+	TidCond            string
+	Operation          string
+	JoinType           string
+	SubPlanName        string
 }
 
 type Analyzed struct {
