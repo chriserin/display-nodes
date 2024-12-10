@@ -30,10 +30,6 @@ type keyMap struct {
 	Help               key.Binding
 	Quit               key.Binding
 	JoinView           key.Binding
-	ToggleRows         key.Binding
-	ToggleBuffers      key.Binding
-	ToggleCost         key.Binding
-	ToggleTimes        key.Binding
 	ToggleDisplaySql   key.Binding
 	NextStatDisplay    key.Binding
 	PrevStatDisplay    key.Binding
@@ -100,22 +96,6 @@ var keys = keyMap{
 	JoinView: key.NewBinding(
 		key.WithKeys("J"),
 		key.WithHelp("J", "Join"),
-	),
-	ToggleRows: key.NewBinding(
-		key.WithKeys("R"),
-		key.WithHelp("R", "Toggle Rows"),
-	),
-	ToggleBuffers: key.NewBinding(
-		key.WithKeys("B"),
-		key.WithHelp("B", "Toggle Buffers"),
-	),
-	ToggleCost: key.NewBinding(
-		key.WithKeys("C"),
-		key.WithHelp("C", "Toggle Costs"),
-	),
-	ToggleTimes: key.NewBinding(
-		key.WithKeys("T"),
-		key.WithHelp("T", "Toggle Times"),
 	),
 	NextStatDisplay: key.NewBinding(
 		key.WithKeys("]"),
@@ -459,30 +439,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.SelectedNode = m.DisplayNodes[m.ctx.Cursor]
 			} else {
 				m.ctx.SelectedNode = PlanNode{}
-			}
-		case key.Matches(msg, m.keys.ToggleRows):
-			if m.ctx.StatDisplay == DisplayRows {
-				m.ctx.StatDisplay = DisplayNothing
-			} else {
-				m.ctx.StatDisplay = DisplayRows
-			}
-		case key.Matches(msg, m.keys.ToggleBuffers):
-			if m.ctx.StatDisplay == DisplayBuffers {
-				m.ctx.StatDisplay = DisplayNothing
-			} else {
-				m.ctx.StatDisplay = DisplayBuffers
-			}
-		case key.Matches(msg, m.keys.ToggleCost):
-			if m.ctx.StatDisplay == DisplayCost {
-				m.ctx.StatDisplay = DisplayNothing
-			} else {
-				m.ctx.StatDisplay = DisplayCost
-			}
-		case key.Matches(msg, m.keys.ToggleTimes):
-			if m.ctx.StatDisplay == DisplayTime {
-				m.ctx.StatDisplay = DisplayNothing
-			} else {
-				m.ctx.StatDisplay = DisplayTime
 			}
 		case key.Matches(msg, m.keys.NextStatDisplay):
 			m.ctx.StatDisplay = nextStatDisplay(m.ctx)
