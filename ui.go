@@ -495,9 +495,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.ToggleDisplaySql):
 			m.ctx.DisplaySql = !m.ctx.DisplaySql
 		case key.Matches(msg, m.keys.ReExecute):
-			m.loading = true
-			m.stopwatch = stopwatch.NewWithInterval(time.Millisecond * 100)
-			return m, tea.Batch(m.stopwatch.Init(), m.spinner.Tick, ExecuteQueryCmd(m.originalSource.fileName, m.nextRunSettings))
+			if m.originalSource.sourceType == SOURCE_FILE {
+				m.loading = true
+				m.stopwatch = stopwatch.NewWithInterval(time.Millisecond * 100)
+				return m, tea.Batch(m.stopwatch.Init(), m.spinner.Tick, ExecuteQueryCmd(m.originalSource.fileName, m.nextRunSettings))
+			}
 		case key.Matches(msg, m.keys.PrevQueryRun):
 			return m, PreviousQueryRun(m.queryRun)
 		case key.Matches(msg, m.keys.NextQueryRun):
