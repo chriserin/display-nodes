@@ -108,9 +108,8 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 	}
 
 	if ctx.JoinView && node.RelationName != "" {
-		buf.WriteString(styles.NodeName.Render(node.abbrevName()))
-		buf.WriteString(styles.Everything.Render(" - "))
-		buf.WriteString(styles.Relation.Render(node.RelationName))
+		buf.WriteString(styles.NodeName.Render(node.Name()))
+		buf.WriteString(styles.Relation.Render(" " + node.RelationName))
 	} else {
 		buf.WriteString(styles.Workers.Render(node.label()))
 		buf.WriteString(styles.NodeName.Render(node.Name()))
@@ -119,6 +118,9 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 		}
 		if node.FunctionName != "" {
 			buf.WriteString(styles.Relation.Render(" " + node.FunctionName))
+		}
+		if node.RelationName != "" {
+			buf.WriteString(styles.Relation.Render(" " + node.RelationName))
 		}
 	}
 
@@ -263,35 +265,20 @@ func (node PlanNode) rows(styles Styles, space int, ctx ProgramContext) string {
 	separatedPlanRows := formatUnderscores(node.PlanRows)
 	separatedActualRows := formatUnderscores(node.Analyzed.ActualRows)
 
-	percentOfActual := float32(node.PlanRows) / float32(node.Analyzed.ActualRows) * 100
-
-	rowStatus := getRowStatus(percentOfActual, styles)
-
 	var buf strings.Builder
-	if false {
-		buf.WriteString(styles.Bracket.Render(" ["))
-		buf.WriteString(styles.Everything.Render("p="))
-		buf.WriteString(styles.Value.Render(separatedPlanRows))
-		buf.WriteString(styles.Everything.Render(" "))
-		buf.WriteString(styles.Everything.Render("a="))
-		buf.WriteString(styles.Value.Render(separatedActualRows))
-		buf.WriteString(rowStatus)
-		buf.WriteString(styles.Bracket.Render("]"))
-	} else {
 
-		if ctx.Analyzed {
-			if node.ParentIsNestedLoop && node.ParentRelationship == "Inner" {
-				separatedActualRows = fmt.Sprintf("(%s) → %s", formatUnderscores(node.Analyzed.ActualLoops), separatedActualRows)
-			} else if node.Analyzed.ActualLoops > 1 {
-				separatedActualRows = fmt.Sprintf("%s(%s)", separatedActualRows, formatUnderscores(node.Analyzed.ActualLoops))
-			}
-		} else {
-			separatedActualRows = "- "
+	if ctx.Analyzed {
+		if node.ParentIsNestedLoop && node.ParentRelationship == "Inner" {
+			separatedActualRows = fmt.Sprintf("(%s) → %s", formatUnderscores(node.Analyzed.ActualLoops), separatedActualRows)
+		} else if node.Analyzed.ActualLoops > 1 {
+			separatedActualRows = fmt.Sprintf("%s(%s)", separatedActualRows, formatUnderscores(node.Analyzed.ActualLoops))
 		}
-
-		columns := fmt.Sprintf("%15s%15s", separatedPlanRows, separatedActualRows)
-		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
+	} else {
+		separatedActualRows = "- "
 	}
+
+	columns := fmt.Sprintf("%5s%15s", separatedPlanRows, separatedActualRows)
+	buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
 
 	return buf.String()
 }
