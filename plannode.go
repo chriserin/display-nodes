@@ -111,7 +111,14 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 		buf.WriteString(styles.Everything.Render(" - "))
 		buf.WriteString(styles.Relation.Render(node.RelationName))
 	} else {
-		buf.WriteString(styles.NodeName.Render(node.name()))
+		buf.WriteString(styles.Workers.Render(node.label()))
+		buf.WriteString(styles.NodeName.Render(node.Name()))
+		if node.CteName != "" {
+			buf.WriteString(styles.Relation.Render(" " + node.CteName))
+		}
+		if node.FunctionName != "" {
+			buf.WriteString(styles.Relation.Render(" " + node.FunctionName))
+		}
 	}
 
 	result := buf.String()
@@ -157,8 +164,34 @@ func (node PlanNode) abbrevName() string {
 	return ""
 }
 
-func (node PlanNode) name() string {
-	return strings.Trim(fmt.Sprintf("%s %s", node.PartialMode, node.NodeType), " ")
+func (node PlanNode) Name() string {
+	if node.NodeType == "SetOp" {
+		var strategy string
+		if node.Strategy == "Hashed" {
+			strategy = "Hash"
+		}
+		return strings.Trim(fmt.Sprintf("%s%s %s", strategy, "SetOp", node.Command), " ")
+	}
+
+	var joinType string
+	var nodeName = node.NodeType
+	if node.JoinType != "" {
+		joinType = node.JoinType + " Join"
+		nodeName = strings.Replace(node.NodeType, " Join", "", 1)
+	}
+	if node.NodeType == "ModifyTable" {
+		nodeName = node.Operation
+	} else {
+		nodeName = nodeName
+	}
+	return strings.Trim(fmt.Sprintf("%s %s %s", node.PartialMode, nodeName, joinType), " ")
+}
+
+func (node PlanNode) label() string {
+	if node.SubPlanName != "" {
+		return fmt.Sprintf("%s: ", node.SubPlanName)
+	}
+	return ""
 }
 
 func (node PlanNode) buffers(styles Styles, space int) string {
@@ -307,6 +340,16 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 		buf.WriteString(ctx.NormalStyle.Relation.Render(node.RelationName))
 		buf.WriteString("\n")
 	}
+	if node.CteName != "" {
+		buf.WriteString(ctx.DetailStyles.Label.Render("CTE Name: "))
+		buf.WriteString(ctx.NormalStyle.Relation.Render(node.CteName))
+		buf.WriteString("\n")
+	}
+	if node.FunctionName != "" {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Function Name: "))
+		buf.WriteString(ctx.NormalStyle.Relation.Render(node.FunctionName))
+		buf.WriteString("\n")
+	}
 	if node.IndexName != "" {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Index Name: "))
 		buf.WriteString(ctx.NormalStyle.Everything.Render(node.IndexName))
@@ -325,6 +368,16 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 	if node.GroupKey != nil {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Group Keys: "))
 		buf.WriteString(ctx.NormalStyle.Everything.Render(strings.Join(node.GroupKey, ", ")))
+		buf.WriteString("\n")
+	}
+	if node.PresortKeys != nil {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Presort Keys: "))
+		buf.WriteString(ctx.NormalStyle.Everything.Render(strings.Join(node.PresortKeys, ", ")))
+		buf.WriteString("\n")
+	}
+	if node.SortKeys != nil {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Sort Keys: "))
+		buf.WriteString(ctx.NormalStyle.Everything.Render(strings.Join(node.SortKeys, ", ")))
 		buf.WriteString("\n")
 	}
 	if node.Filter != "" {

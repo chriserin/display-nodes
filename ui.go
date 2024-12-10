@@ -663,7 +663,7 @@ func (m Model) View() string {
 		buf.WriteString(m.sqlHelp.ShortHelpView(keys.SqlShortHelp()))
 	} else {
 		m.detailsViewport.SetContent(m.ctx.SelectedNode.Content(m.ctx))
-		m.detailsViewport.subtitle = m.ctx.NormalStyle.NodeName.Render(m.ctx.SelectedNode.name())
+		m.detailsViewport.subtitle = m.ctx.NormalStyle.NodeName.Render(m.ctx.SelectedNode.Name())
 		buf.WriteString(m.detailsViewport.View())
 		buf.WriteString("\n")
 		if slices.Contains([]SourceType{SOURCE_PGEX, SOURCE_FILE}, m.source.sourceType) {
