@@ -109,7 +109,9 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 
 	if ctx.JoinView && node.RelationName != "" {
 		buf.WriteString(styles.NodeName.Render(node.Name()))
-		buf.WriteString(styles.Relation.Render(" " + node.RelationName))
+		if ctx.DisplayRelations {
+			buf.WriteString(styles.Relation.Render(" " + node.RelationName))
+		}
 	} else {
 		buf.WriteString(styles.Workers.Render(node.label()))
 		buf.WriteString(styles.NodeName.Render(node.Name()))
@@ -119,7 +121,7 @@ func (node PlanNode) View(i int, ctx ProgramContext) string {
 		if node.FunctionName != "" {
 			buf.WriteString(styles.Relation.Render(" " + node.FunctionName))
 		}
-		if node.RelationName != "" {
+		if node.RelationName != "" && ctx.DisplayRelations {
 			buf.WriteString(styles.Relation.Render(" " + node.RelationName))
 		}
 	}

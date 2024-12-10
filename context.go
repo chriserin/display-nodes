@@ -31,26 +31,25 @@ func (s StatView) String() string {
 }
 
 type ProgramContext struct {
-	Indent              bool
-	Cursor              int
-	SettingsCursor      int
-	JoinView            bool
-	StatDisplay         StatView
-	DisplayParallel     bool
-	DisplayNumbers      bool
-	NormalStyle         Styles
-	CursorStyle         Styles
-	ChildCursorStyle    Styles
-	StatusStyles        StatusStyles
-	DetailStyles        DetailStyles
-	SettingsStyles      SettingsStyles
-	SelectedNode        PlanNode
-	Width               int
-	Height              int
-	Analyzed            bool
-	DisplaySql          bool
-	DisplaySettings     bool
-	DisplayNextSettings bool
+	Indent           bool
+	Cursor           int
+	SettingsCursor   int
+	JoinView         bool
+	StatDisplay      StatView
+	DisplayParallel  bool
+	DisplayNumbers   bool
+	NormalStyle      Styles
+	CursorStyle      Styles
+	ChildCursorStyle Styles
+	StatusStyles     StatusStyles
+	DetailStyles     DetailStyles
+	SettingsStyles   SettingsStyles
+	SelectedNode     PlanNode
+	Width            int
+	Height           int
+	Analyzed         bool
+	DisplaySql       bool
+	DisplayRelations bool
 }
 
 type Styles struct {

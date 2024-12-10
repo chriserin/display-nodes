@@ -35,6 +35,7 @@ type keyMap struct {
 	PrevStatDisplay    key.Binding
 	ToggleParallel     key.Binding
 	ToggleNumbers      key.Binding
+	ToggleRelations    key.Binding
 	ReExecute          key.Binding
 	PrevQueryRun       key.Binding
 	NextQueryRun       key.Binding
@@ -58,7 +59,7 @@ func (k keyMap) SqlShortHelp() []key.Binding {
 // key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.ToggleParallel, k.ToggleNumbers, k.ToggleDisplaySql, k.ReExecute}, // first column
+		{k.Up, k.Down, k.ToggleParallel, k.ToggleNumbers, k.ToggleDisplaySql, k.ToggleRelations, k.ReExecute}, // first column
 		{k.NextStatDisplay, k.PrevStatDisplay, k.SettingsUp, k.SettingsDown, k.SettingIncrement, k.SettingDecrement},
 		{k.PrevQueryRun, k.NextQueryRun, k.Help, k.Quit}, // second column
 	}
@@ -112,6 +113,10 @@ var keys = keyMap{
 	ToggleNumbers: key.NewBinding(
 		key.WithKeys("N"),
 		key.WithHelp("N", "Toggle Numbers"),
+	),
+	ToggleRelations: key.NewBinding(
+		key.WithKeys("R"),
+		key.WithHelp("R", "Toggle Relations"),
 	),
 	ToggleDisplaySql: key.NewBinding(
 		key.WithKeys("D"),
@@ -450,6 +455,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.DisplayNumbers = !m.ctx.DisplayNumbers
 		case key.Matches(msg, m.keys.ToggleDisplaySql):
 			m.ctx.DisplaySql = !m.ctx.DisplaySql
+		case key.Matches(msg, m.keys.ToggleRelations):
+			m.ctx.DisplayRelations = !m.ctx.DisplayRelations
 		case key.Matches(msg, m.keys.ReExecute):
 			if m.originalSource.sourceType == SOURCE_FILE {
 				m.loading = true
@@ -651,16 +658,6 @@ func HeadersView(ctx ProgramContext, spaceAvailable int) string {
 		headers = ""
 	}
 	return fmt.Sprintf("%*s", spaceAvailable, headers)
-}
-
-func SettingsSubtitle(ctx ProgramContext) string {
-	var settingsIndicator string
-	if ctx.DisplayNextSettings {
-		settingsIndicator = fmt.Sprintf("%s | %s", "PGEX", ctx.SettingsStyles.SelectedSettingsType.Render("NEXT"))
-	} else {
-		settingsIndicator = fmt.Sprintf("%s | %s", ctx.SettingsStyles.SelectedSettingsType.Render("PGEX"), "NEXT")
-	}
-	return settingsIndicator
 }
 
 func SettingsView(settings []Setting, ctx ProgramContext, nextSettings bool) string {
