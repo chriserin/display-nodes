@@ -38,9 +38,9 @@ func TestName(t *testing.T) {
 			result: "HashSetOp Except",
 		},
 		{
-			desc:   "Parallel aware nodes",
-			node:   PlanNode{NodeType: "Index Only Scan", ParallelAware: true},
-			result: "Parallel Index Only Scan",
+			desc:   "Inner joins are implicit",
+			node:   PlanNode{NodeType: "Hash Join", JoinType: "Inner"},
+			result: "Hash Join",
 		},
 	}
 	for _, tC := range testCases {

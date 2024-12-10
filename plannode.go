@@ -176,7 +176,7 @@ func (node PlanNode) Name() string {
 
 	var joinType string
 	var nodeName = node.NodeType
-	if node.JoinType != "" {
+	if node.JoinType != "" && node.JoinType != "Inner" {
 		joinType = node.JoinType + " Join"
 		nodeName = strings.Replace(node.NodeType, " Join", "", 1)
 	}
@@ -185,11 +185,7 @@ func (node PlanNode) Name() string {
 	} else {
 		nodeName = nodeName
 	}
-	var parallel string
-	if node.ParallelAware {
-		parallel = "Parallel"
-	}
-	return strings.ReplaceAll(strings.Trim(fmt.Sprintf("%s %s %s %s", parallel, node.PartialMode, nodeName, joinType), " "), "  ", " ")
+	return strings.ReplaceAll(strings.Trim(fmt.Sprintf("%s %s %s", node.PartialMode, nodeName, joinType), " "), "  ", " ")
 }
 
 func (node PlanNode) label() string {
@@ -325,6 +321,11 @@ func (node PlanNode) Content(ctx ProgramContext) string {
 	if node.Analyzed.TempWriteBlocks > 0 {
 		buf.WriteString(ctx.DetailStyles.Label.Render("Temp Write Blocks: "))
 		buf.WriteString(ctx.DetailStyles.Warning.Render(formatUnderscores(node.Analyzed.TempWriteBlocks)))
+		buf.WriteString("\n")
+	}
+	if node.ParallelAware {
+		buf.WriteString(ctx.DetailStyles.Label.Render("Parallel Aware: "))
+		buf.WriteString(ctx.NormalStyle.Workers.Render("true"))
 		buf.WriteString("\n")
 	}
 	if ctx.Analyzed {
