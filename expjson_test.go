@@ -108,3 +108,12 @@ func TestIncrementalSortProperty(t *testing.T) {
 	assert.Equal(t, []string{"x"}, plan.nodes[0].PresortKeys)
 	assert.Equal(t, []string{"x", "y"}, plan.nodes[0].SortKeys)
 }
+
+func TestParallelAwareProperty(t *testing.T) {
+	data, err := os.ReadFile("./testdata/analyze_no_buffers.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan := Convert(string(data))
+	assert.Equal(t, true, plan.nodes[3].ParallelAware)
+}

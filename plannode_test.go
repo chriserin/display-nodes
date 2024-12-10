@@ -37,6 +37,11 @@ func TestName(t *testing.T) {
 			node:   PlanNode{NodeType: "SetOp", Strategy: "Hashed", Command: "Except"},
 			result: "HashSetOp Except",
 		},
+		{
+			desc:   "Parallel aware nodes",
+			node:   PlanNode{NodeType: "Index Only Scan", ParallelAware: true},
+			result: "Parallel Index Only Scan",
+		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {

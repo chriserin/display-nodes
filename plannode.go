@@ -19,6 +19,7 @@ type PlanNode struct {
 	// Explain Attributes
 	NodeType           string
 	PartialMode        string
+	ParallelAware      bool
 	Plans              []PlanNode
 	PlanRows           int
 	Position           Position
@@ -184,7 +185,11 @@ func (node PlanNode) Name() string {
 	} else {
 		nodeName = nodeName
 	}
-	return strings.Trim(fmt.Sprintf("%s %s %s", node.PartialMode, nodeName, joinType), " ")
+	var parallel string
+	if node.ParallelAware {
+		parallel = "Parallel"
+	}
+	return strings.ReplaceAll(strings.Trim(fmt.Sprintf("%s %s %s %s", parallel, node.PartialMode, nodeName, joinType), " "), "  ", " ")
 }
 
 func (node PlanNode) label() string {

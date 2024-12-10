@@ -88,6 +88,8 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 	nodeType := plan["Node Type"].(string)
 	planRows := plan["Plan Rows"].(float64)
 
+	parallelAware := plan["Parallel Aware"].(bool)
+
 	partialMode, ok := plan["Partial Mode"].(string)
 	if !ok {
 		partialMode = ""
@@ -239,6 +241,7 @@ func extractPlanNodes(plan map[string]interface{}, parentPosition Position, pare
 		NodeType:           nodeType,
 		PlanRows:           int(planRows),
 		PartialMode:        partialMode,
+		ParallelAware:      parallelAware,
 		Position:           newPosition,
 		JoinViewPosition:   joinViewPosition,
 		RelationName:       relationName,
