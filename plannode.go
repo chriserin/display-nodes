@@ -212,7 +212,7 @@ func (node PlanNode) buffers(styles Styles, space int) string {
 		buf.WriteString(readBuffers)
 		buf.WriteString(styles.Bracket.Render("]"))
 	} else {
-		columns := fmt.Sprintf("%15s%15s", totalBuffers, readBuffers)
+		columns := fmt.Sprintf("%5s%15s", totalBuffers, readBuffers)
 		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
 	}
 
@@ -232,7 +232,7 @@ func (node PlanNode) costs(styles Styles, space int) string {
 		buf.WriteString(styles.Value.Render(totalCost))
 		buf.WriteString(styles.Bracket.Render("]"))
 	} else {
-		columns := fmt.Sprintf("%15s%15s", startupCost, totalCost)
+		columns := fmt.Sprintf("%5s%15s", startupCost, totalCost)
 		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
 	}
 
@@ -255,7 +255,7 @@ func (node PlanNode) times(styles Styles, space int) string {
 		if node.ParentIsNestedLoop && node.ParentRelationship == "Inner" {
 			totalTime = fmt.Sprintf("(%s)→%s", formatUnderscores(node.Analyzed.ActualLoops), totalTime)
 		}
-		columns := fmt.Sprintf("%15s%15s", startupTime, totalTime)
+		columns := fmt.Sprintf("%5s%15s", startupTime, totalTime)
 		buf.WriteString(styles.Value.Render(fmt.Sprintf("%*s", space, columns)))
 	}
 
